@@ -1,105 +1,57 @@
+/* 
+ * File:   HeltecLoRaApp.ino
+ * Author: JDazogbo
+ *
+ * Created on February 10, 2025, 10:29 AM
+ */
+
+/*---------------- Include Files ------------------*/
+
 #include <BLEDevice.h>
-#include <BLEServer.h>
 #include <BLEUtils.h>
 #include <BLE2902.h>
+#include <BLE2901.h>
+#include <BLEInterface.h>
 
-BLEServer *pServer = nullptr;
-BLECharacteristic *pTxCharacteristic = nullptr;
-bool deviceConnected = false;
-bool oldDeviceConnected = false;
+// See the following for generating UUIDs:
+// https://www.uuidgenerator.net/
 
-// UUIDs for BLE UART Service (Nordic UART)
-#define SERVICE_UUID           "6E400001-B5A3-F393-E0A9-E50E24DCCA9E"
-#define CHARACTERISTIC_UUID_RX "6E400002-B5A3-F393-E0A9-E50E24DCCA9E"  // Receiving data
-#define CHARACTERISTIC_UUID_TX "6E400003-B5A3-F393-E0A9-E50E24DCCA9E"  // Sending data
+#define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
+#define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
 
-// BLE Connection Callbacks
-class MyServerCallbacks : public BLEServerCallbacks {
-    void onConnect(BLEServer* pServer) {
-        deviceConnected = true;
-    }
-
-    void onDisconnect(BLEServer* pServer) {
-        deviceConnected = false;
-    }
-};
-
-// BLE Receive Data Callback
-class MyCallbacks : public BLECharacteristicCallbacks {
-    void onWrite(BLECharacteristic *pCharacteristic) {
-        String rxValue = pCharacteristic->getValue().c_str(); // Use Arduino String
-
-        if (rxValue.length() > 0) {
-            Serial.print("Received: ");
-            Serial.println(rxValue);  // Print to Serial Monitor
-        }
-
-    }
-};
+BLEInterface* bleServer;
 
 void setup() {
-    Serial.begin(115200);
-    Serial.println("Starting Secure Bluetooth...");
+  Serial.begin(115200);
+    
+  // Initialize BLE Server
+  bleServer = new BLEInterface("TailsStation", SERVICE_UUID, CHARACTERISTIC_UUID, "My characteristic description");
+  
+  // Start the BLE service
+  bleServer->start();
+  bleServer->setValue(0);
+  Serial.println("Waiting for a client to connect...");
 
-    // Initialize BLE Device
-    BLEDevice::init("Heltec_LoRa_V3");
-
-    // Set security parameters
-    BLESecurity *pSecurity = new BLESecurity();
-    pSecurity->setAuthenticationMode(ESP_LE_AUTH_REQ_SC_BOND); // Secure bonding
-    pSecurity->setCapability(ESP_IO_CAP_NONE); // No input/output (Just works pairing)
-    pSecurity->setInitEncryptionKey(ESP_BLE_ENC_KEY_MASK | ESP_BLE_ID_KEY_MASK); // Encryption keys
-
-    // Create BLE Server
-    pServer = BLEDevice::createServer();
-    pServer->setCallbacks(new MyServerCallbacks());
-
-    // Create BLE Service
-    BLEService *pService = pServer->createService(SERVICE_UUID);
-
-    // Create BLE TX Characteristic (For sending data)
-    pTxCharacteristic = pService->createCharacteristic(
-                            CHARACTERISTIC_UUID_TX,
-                            BLECharacteristic::PROPERTY_NOTIFY
-                        );
-    pTxCharacteristic->addDescriptor(new BLE2902());
-
-    // Create BLE RX Characteristic (For receiving data)
-    BLECharacteristic *pRxCharacteristic = pService->createCharacteristic(
-                            CHARACTERISTIC_UUID_RX,
-                            BLECharacteristic::PROPERTY_WRITE
-                        );
-    pRxCharacteristic->setCallbacks(new MyCallbacks());
-
-    // Start the service
-    pService->start();
-
-    // Start advertising Bluetooth
-    pServer->getAdvertising()->start();
-    Serial.println("Secure Bluetooth Ready! Waiting for connections...");
 }
 
 void loop() {
-    // Send data if device is connected
-    if (deviceConnected) {
-        String message = "Hello from ESP32!";
-        pTxCharacteristic->setValue(message.c_str()); // Send string as char array
-        pTxCharacteristic->notify(); // Notify connected device
-        Serial.println("Sent: " + message);
-        delay(1000); // Send every second
+    // If device is connected, send notifications
+    if (bleServer->isConnected()) {
+        bleServer->setValue(bleServer->getValue() + 1);
+        bleServer->notify();
+        delay(1000);
     }
 
-    // Reconnect if disconnected
-    if (!deviceConnected && oldDeviceConnected) {
-        delay(500);
-        pServer->startAdvertising();
-        Serial.println("Restarting advertising...");
-        oldDeviceConnected = deviceConnected;
+    // Handle device disconnection
+    if (bleServer->deviceRecentlyDisconnected()) {
+        Serial.println("Device disconnected!");
+        bleServer->handleDisconnection();
+        Serial.println("Waiting for a client to connect...");
     }
 
-    // Handle new connection
-    if (deviceConnected && !oldDeviceConnected) {
-        oldDeviceConnected = deviceConnected;
-        Serial.println("Attempting to Connect to old device...");
+    // Handle device reconnection
+    if (bleServer->deviceRecentlyConnected()) {
+        bleServer->handleReconnection();
+        Serial.println("Device connected!");
     }
 }

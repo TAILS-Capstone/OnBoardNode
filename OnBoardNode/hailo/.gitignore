@@ -160,6 +160,7 @@ cython_debug/
 # hailo-rpi5-examples specific
 venv_TAILS_cv/*
 resources/*.mp4
+resources/*.MP4
 resources/*.hef
 resources/*.so
 =======

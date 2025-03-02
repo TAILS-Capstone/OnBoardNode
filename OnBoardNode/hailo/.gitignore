@@ -163,6 +163,7 @@ resources/*.mp4
 resources/*.MP4
 resources/*.hef
 resources/*.so
+gstshark*/
 =======
 # Byte-compiled files
 __pycache__/

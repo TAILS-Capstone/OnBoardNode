@@ -1,20 +1,24 @@
 import os
 
+
 def get_source_type(input_source):
     # This function will return the source type based on the input source
     # return values can be "file", "mipi" or "usb"
     if input_source.startswith("/dev/video"):
-        return 'usb'
+        return "usb"
     elif input_source.startswith("rpi"):
-        return 'rpi'
-    elif input_source.startswith("libcamera"): # Use libcamerasrc element, not suggested
-        return 'libcamera'
-    elif input_source.startswith('0x'):
-        return 'ximage'
+        return "rpi"
+    elif input_source.startswith(
+        "libcamera"
+    ):  # Use libcamerasrc element, not suggested
+        return "libcamera"
+    elif input_source.startswith("0x"):
+        return "ximage"
     else:
-        return 'file'
+        return "file"
 
-def QUEUE(name, max_size_buffers=3, max_size_bytes=0, max_size_time=0, leaky='no'):
+
+def QUEUE(name, max_size_buffers=3, max_size_bytes=0, max_size_time=0, leaky="no"):
     """
     Creates a GStreamer queue element string with the specified parameters.
 
@@ -28,8 +32,9 @@ def QUEUE(name, max_size_buffers=3, max_size_bytes=0, max_size_time=0, leaky='no
     Returns:
         str: A string representing the GStreamer queue element with the specified parameters.
     """
-    q_string = f'queue name={name} leaky={leaky} max-size-buffers={max_size_buffers} max-size-bytes={max_size_bytes} max-size-time={max_size_time} '
+    q_string = f"queue name={name} leaky={leaky} max-size-buffers={max_size_buffers} max-size-bytes={max_size_bytes} max-size-time={max_size_time} "
     return q_string
+
 
 def get_camera_resulotion(video_width=640, video_height=640):
     # This function will return a standard camera resolution based on the video resolution required
@@ -45,72 +50,97 @@ def get_camera_resulotion(video_width=640, video_height=640):
         return 3840, 2160
 
 
-def SOURCE_PIPELINE(video_source, video_width=640, video_height=640, video_format='RGB', name='source', no_webcam_compression=False):
+def SOURCE_PIPELINE(
+    video_source,
+    video_width=640,
+    video_height=640,
+    video_format="RGB",
+    name="source",
+    no_webcam_compression=False,
+    preserve_input_resolution=False,
+):
     """
     Creates a GStreamer pipeline string for the video source.
 
     Args:
         video_source (str): The path or device name of the video source.
-        video_width (int, optional): The width of the video. Defaults to 640.
-        video_height (int, optional): The height of the video. Defaults to 640.
+        video_width (int, optional): The target width for scaling if not preserving input resolution. Defaults to 640.
+        video_height (int, optional): The target height for scaling if not preserving input resolution. Defaults to 640.
         video_format (str, optional): The video format. Defaults to 'RGB'.
         name (str, optional): The prefix name for the pipeline elements. Defaults to 'source'.
+        no_webcam_compression (bool, optional): When using a USB source, if True, uses an uncompressed low-resolution format.
+                                                  Defaults to False.
+        preserve_input_resolution (bool, optional): If True, the input resolution is preserved and no scaling is performed.
+                                                    If False, the input is scaled to video_width x video_height.
+                                                    Defaults to False.
 
     Returns:
         str: A string representing the GStreamer pipeline for the video source.
     """
     source_type = get_source_type(video_source)
 
-    if source_type == 'usb':
+    if source_type == "usb":
         if no_webcam_compression:
-            # When using uncomressed format, only low resolution is supported
+            # When using uncompressed format, only low resolution is supported.
             source_element = (
-                f'v4l2src device={video_source} name={name} ! '
-                f'video/x-raw, format=RGB, width=640, height=480 ! '
-                'videoflip name=videoflip video-direction=horiz ! '
+                f"v4l2src device={video_source} name={name} ! "
+                f"video/x-raw, format=RGB, width=640, height=480 ! "
+                "videoflip name=videoflip video-direction=horiz ! "
             )
         else:
-            # Use compressed format for webcam
+            # Use compressed format for webcam.
             width, height = get_camera_resulotion(video_width, video_height)
             source_element = (
-                f'v4l2src device={video_source} name={name} ! image/jpeg, framerate=30/1, width={width}, height={height} ! '
+                f"v4l2src device={video_source} name={name} ! image/jpeg, framerate=30/1, width={width}, height={height} ! "
                 f'{QUEUE(name=f"{name}_queue_decode")} ! '
-                f'decodebin name={name}_decodebin ! '
-                f'videoflip name=videoflip video-direction=horiz ! '
+                f"decodebin name={name}_decodebin ! "
+                f"videoflip name=videoflip video-direction=horiz ! "
             )
-    elif source_type == 'rpi':
+    elif source_type == "rpi":
         source_element = (
-            f'appsrc name=app_source is-live=true leaky-type=downstream max-buffers=3 ! '
-            'videoflip name=videoflip video-direction=horiz ! '
-            f'video/x-raw, format={video_format}, width={video_width}, height={video_height} ! '
+            f"appsrc name=app_source is-live=true leaky-type=downstream max-buffers=3 ! "
+            "videoflip name=videoflip video-direction=horiz ! "
+            f"video/x-raw, format={video_format}, width={video_width}, height={video_height} ! "
         )
-    elif source_type == 'libcamera':
+    elif source_type == "libcamera":
         source_element = (
-            f'libcamerasrc name={name} ! '
-            f'video/x-raw, format={video_format}, width=1536, height=864 ! '
+            f"libcamerasrc name={name} ! "
+            f"video/x-raw, format={video_format}, width=1536, height=864 ! "
         )
-    elif source_type == 'ximage':
+    elif source_type == "ximage":
         source_element = (
-            f'ximagesrc xid={video_source} ! '
+            f"ximagesrc xid={video_source} ! "
             f'{QUEUE(name=f"{name}queue_scale_")} ! '
-            f'videoscale ! '
+            f"videoscale ! "
         )
     else:
         source_element = (
             f'filesrc location="{video_source}" name={name} ! '
             f'{QUEUE(name=f"{name}_queue_decode")} ! '
-            f'decodebin name={name}_decodebin ! '
+            f"decodebin name={name}_decodebin ! "
         )
-    source_pipeline = (
-        f'{source_element} '
-        f'{QUEUE(name=f"{name}_scale_q")} ! '
-        f'videoscale name={name}_videoscale n-threads=2 ! '
-        f'{QUEUE(name=f"{name}_convert_q")} ! '
-        f'videoconvert n-threads=3 name={name}_convert qos=false ! '
-        f'video/x-raw, pixel-aspect-ratio=1/1, format={video_format}, width={video_width}, height={video_height} '
-    )
+
+    if preserve_input_resolution:
+        # Do not change the input resolution; only perform necessary conversion.
+        scale_convert_pipeline = (
+            f'{QUEUE(name=f"{name}_convert_q")} ! '
+            f"videoconvert n-threads=3 name={name}_convert qos=false ! "
+            f"video/x-raw, pixel-aspect-ratio=1/1, format={video_format} "
+        )
+    else:
+        # Scale the input to the desired resolution.
+        scale_convert_pipeline = (
+            f'{QUEUE(name=f"{name}_scale_q")} ! '
+            f"videoscale name={name}_videoscale n-threads=2 ! "
+            f'{QUEUE(name=f"{name}_convert_q")} ! '
+            f"videoconvert n-threads=3 name={name}_convert qos=false ! "
+            f"video/x-raw, pixel-aspect-ratio=1/1, format={video_format}, width={video_width}, height={video_height} "
+        )
+
+    source_pipeline = f"{source_element} {scale_convert_pipeline}"
 
     return source_pipeline
+
 
 def INFERENCE_PIPELINE(
     hef_path,
@@ -118,13 +148,13 @@ def INFERENCE_PIPELINE(
     batch_size=1,
     config_json=None,
     post_function_name=None,
-    additional_params='',
-    name='inference',
+    additional_params="",
+    name="inference",
     # Extra hailonet parameters
     scheduler_timeout_ms=None,
     scheduler_priority=None,
     vdevice_group_id=1,
-    multi_process_service=None
+    multi_process_service=None,
 ):
     """
     Creates a GStreamer pipeline string for inference and post-processing using a user-provided shared object file.
@@ -151,46 +181,63 @@ def INFERENCE_PIPELINE(
         str: A string representing the GStreamer pipeline for inference.
     """
     # config & function strings
-    config_str = f' config-path={config_json} ' if config_json else ''
-    function_name_str = f' function-name={post_function_name} ' if post_function_name else ''
-    vdevice_group_id_str = f' vdevice-group-id={vdevice_group_id} '
-    multi_process_service_str = f' multi-process-service={str(multi_process_service).lower()} ' if multi_process_service is not None else ''
-    scheduler_timeout_ms_str = f' scheduler-timeout-ms={scheduler_timeout_ms} ' if scheduler_timeout_ms is not None else ''
-    scheduler_priority_str = f' scheduler-priority={scheduler_priority} ' if scheduler_priority is not None else ''
+    config_str = f" config-path={config_json} " if config_json else ""
+    function_name_str = (
+        f" function-name={post_function_name} " if post_function_name else ""
+    )
+    vdevice_group_id_str = f" vdevice-group-id={vdevice_group_id} "
+    multi_process_service_str = (
+        f" multi-process-service={str(multi_process_service).lower()} "
+        if multi_process_service is not None
+        else ""
+    )
+    scheduler_timeout_ms_str = (
+        f" scheduler-timeout-ms={scheduler_timeout_ms} "
+        if scheduler_timeout_ms is not None
+        else ""
+    )
+    scheduler_priority_str = (
+        f" scheduler-priority={scheduler_priority} "
+        if scheduler_priority is not None
+        else ""
+    )
 
     hailonet_str = (
-        f'hailonet name={name}_hailonet '
-        f'hef-path={hef_path} '
-        f'batch-size={batch_size} '
-        f'{vdevice_group_id_str}'
-        f'{multi_process_service_str}'
-        f'{scheduler_timeout_ms_str}'
-        f'{scheduler_priority_str}'
-        f'{additional_params} '
-        f'force-writable=true '
+        f"hailonet name={name}_hailonet "
+        f"hef-path={hef_path} "
+        f"batch-size={batch_size} "
+        f"{vdevice_group_id_str}"
+        f"{multi_process_service_str}"
+        f"{scheduler_timeout_ms_str}"
+        f"{scheduler_priority_str}"
+        f"{additional_params} "
+        f"force-writable=true "
     )
 
     inference_pipeline = (
         f'{QUEUE(name=f"{name}_scale_q")} ! '
-        f'videoscale name={name}_videoscale n-threads=2 qos=false ! '
+        f"videoscale name={name}_videoscale n-threads=2 qos=false ! "
         f'{QUEUE(name=f"{name}_convert_q")} ! '
-        f'video/x-raw, pixel-aspect-ratio=1/1 ! '
-        f'videoconvert name={name}_videoconvert n-threads=2 ! '
+        f"video/x-raw, pixel-aspect-ratio=1/1 ! "
+        f"videoconvert name={name}_videoconvert n-threads=2 ! "
         f'{QUEUE(name=f"{name}_hailonet_q")} ! '
-        f'{hailonet_str} ! '
+        f"{hailonet_str} ! "
     )
 
     if post_process_so:
         inference_pipeline += (
             f'{QUEUE(name=f"{name}_hailofilter_q")} ! '
-            f'hailofilter name={name}_hailofilter so-path={post_process_so} {config_str} {function_name_str} qos=false ! '
+            f"hailofilter name={name}_hailofilter so-path={post_process_so} {config_str} {function_name_str} qos=false ! "
         )
 
     inference_pipeline += f'{QUEUE(name=f"{name}_output_q")} '
 
     return inference_pipeline
 
-def INFERENCE_PIPELINE_WRAPPER(inner_pipeline, bypass_max_size_buffers=20, name='inference_wrapper'):
+
+def INFERENCE_PIPELINE_WRAPPER(
+    inner_pipeline, bypass_max_size_buffers=20, name="inference_wrapper"
+):
     """
     Creates a GStreamer pipeline string that wraps an inner pipeline with a hailocropper and hailoaggregator.
     This allows to keep the original video resolution and color-space (format) of the input frame.
@@ -205,22 +252,25 @@ def INFERENCE_PIPELINE_WRAPPER(inner_pipeline, bypass_max_size_buffers=20, name=
         str: A string representing the GStreamer pipeline for the inference wrapper.
     """
     # Get the directory for post-processing shared objects
-    tappas_post_process_dir = os.environ.get('TAPPAS_POST_PROC_DIR', '')
-    whole_buffer_crop_so = os.path.join(tappas_post_process_dir, 'cropping_algorithms/libwhole_buffer.so')
+    tappas_post_process_dir = os.environ.get("TAPPAS_POST_PROC_DIR", "")
+    whole_buffer_crop_so = os.path.join(
+        tappas_post_process_dir, "cropping_algorithms/libwhole_buffer.so"
+    )
 
     # Construct the inference wrapper pipeline string
     inference_wrapper_pipeline = (
         f'{QUEUE(name=f"{name}_input_q")} ! '
-        f'hailocropper name={name}_crop so-path={whole_buffer_crop_so} function-name=create_crops use-letterbox=true resize-method=inter-area internal-offset=true '
-        f'hailoaggregator name={name}_agg '
+        f"hailocropper name={name}_crop so-path={whole_buffer_crop_so} function-name=create_crops use-letterbox=true resize-method=inter-area internal-offset=true "
+        f"hailoaggregator name={name}_agg "
         f'{name}_crop. ! {QUEUE(max_size_buffers=bypass_max_size_buffers, name=f"{name}_bypass_q")} ! {name}_agg.sink_0 '
-        f'{name}_crop. ! {inner_pipeline} ! {name}_agg.sink_1 '
+        f"{name}_crop. ! {inner_pipeline} ! {name}_agg.sink_1 "
         f'{name}_agg. ! {QUEUE(name=f"{name}_output_q")} '
     )
 
     return inference_wrapper_pipeline
 
-def OVERLAY_PIPELINE(name='hailo_overlay'):
+
+def OVERLAY_PIPELINE(name="hailo_overlay"):
     """
     Creates a GStreamer pipeline string for the hailooverlay element.
     This pipeline is used to draw bounding boxes and labels on the video.
@@ -232,14 +282,14 @@ def OVERLAY_PIPELINE(name='hailo_overlay'):
         str: A string representing the GStreamer pipeline for the hailooverlay element.
     """
     # Construct the overlay pipeline string
-    overlay_pipeline = (
-        f'{QUEUE(name=f"{name}_q")} ! '
-        f'hailooverlay name={name} '
-    )
+    overlay_pipeline = f'{QUEUE(name=f"{name}_q")} ! ' f"hailooverlay name={name} "
 
     return overlay_pipeline
 
-def DISPLAY_PIPELINE(video_sink='autovideosink', sync='true', show_fps='false', name='hailo_display'):
+
+def DISPLAY_PIPELINE(
+    video_sink="autovideosink", sync="true", show_fps="false", name="hailo_display"
+):
     """
     Creates a GStreamer pipeline string for displaying the video.
     It includes the hailooverlay plugin to draw bounding boxes and labels on the video.
@@ -257,14 +307,15 @@ def DISPLAY_PIPELINE(video_sink='autovideosink', sync='true', show_fps='false', 
     display_pipeline = (
         f'{OVERLAY_PIPELINE(name=f"{name}_overlay")} ! '
         f'{QUEUE(name=f"{name}_videoconvert_q")} ! '
-        f'videoconvert name={name}_videoconvert n-threads=2 qos=false ! '
+        f"videoconvert name={name}_videoconvert n-threads=2 qos=false ! "
         f'{QUEUE(name=f"{name}_q")} ! '
-        f'fpsdisplaysink name={name} video-sink={video_sink} sync={sync} text-overlay={show_fps} signal-fps-measurements=true '
+        f"fpsdisplaysink name={name} video-sink={video_sink} sync={sync} text-overlay={show_fps} signal-fps-measurements=true "
     )
 
     return display_pipeline
 
-def FILE_SINK_PIPELINE(output_file='output.mkv', name='file_sink', bitrate=5000):
+
+def FILE_SINK_PIPELINE(output_file="output.mkv", name="file_sink", bitrate=5000):
     """
     Creates a GStreamer pipeline string for saving the video to a file in .mkv format.
     It it recommended run ffmpeg to fix the file header after recording.
@@ -281,16 +332,17 @@ def FILE_SINK_PIPELINE(output_file='output.mkv', name='file_sink', bitrate=5000)
     # Construct the file sink pipeline string
     file_sink_pipeline = (
         f'{QUEUE(name=f"{name}_videoconvert_q")} ! '
-        f'videoconvert name={name}_videoconvert n-threads=2 qos=false ! '
+        f"videoconvert name={name}_videoconvert n-threads=2 qos=false ! "
         f'{QUEUE(name=f"{name}_encoder_q")} ! '
-        f'x264enc tune=zerolatency bitrate={bitrate} ! '
-        f'matroskamux ! '
-        f'filesink location={output_file} '
+        f"x264enc tune=zerolatency bitrate={bitrate} ! "
+        f"matroskamux ! "
+        f"filesink location={output_file} "
     )
 
     return file_sink_pipeline
 
-def USER_CALLBACK_PIPELINE(name='identity_callback'):
+
+def USER_CALLBACK_PIPELINE(name="identity_callback"):
     """
     Creates a GStreamer pipeline string for the user callback element.
 
@@ -301,14 +353,23 @@ def USER_CALLBACK_PIPELINE(name='identity_callback'):
         str: A string representing the GStreamer pipeline for the user callback element.
     """
     # Construct the user callback pipeline string
-    user_callback_pipeline = (
-        f'{QUEUE(name=f"{name}_q")} ! '
-        f'identity name={name} '
-    )
+    user_callback_pipeline = f'{QUEUE(name=f"{name}_q")} ! ' f"identity name={name} "
 
     return user_callback_pipeline
 
-def TRACKER_PIPELINE(class_id, kalman_dist_thr=0.8, iou_thr=0.9, init_iou_thr=0.7, keep_new_frames=2, keep_tracked_frames=15, keep_lost_frames=2, keep_past_metadata=False, qos=False, name='hailo_tracker'):
+
+def TRACKER_PIPELINE(
+    class_id,
+    kalman_dist_thr=0.8,
+    iou_thr=0.9,
+    init_iou_thr=0.7,
+    keep_new_frames=2,
+    keep_tracked_frames=15,
+    keep_lost_frames=2,
+    keep_past_metadata=False,
+    qos=False,
+    name="hailo_tracker",
+):
     """
     Creates a GStreamer pipeline string for the HailoTracker element.
     Args:
@@ -329,11 +390,12 @@ def TRACKER_PIPELINE(class_id, kalman_dist_thr=0.8, iou_thr=0.9, init_iou_thr=0.
     """
     # Construct the tracker pipeline string
     tracker_pipeline = (
-        f'hailotracker name={name} class-id={class_id} kalman-dist-thr={kalman_dist_thr} iou-thr={iou_thr} init-iou-thr={init_iou_thr} '
-        f'keep-new-frames={keep_new_frames} keep-tracked-frames={keep_tracked_frames} keep-lost-frames={keep_lost_frames} keep-past-metadata={keep_past_metadata} qos={qos} ! '
+        f"hailotracker name={name} class-id={class_id} kalman-dist-thr={kalman_dist_thr} iou-thr={iou_thr} init-iou-thr={init_iou_thr} "
+        f"keep-new-frames={keep_new_frames} keep-tracked-frames={keep_tracked_frames} keep-lost-frames={keep_lost_frames} keep-past-metadata={keep_past_metadata} qos={qos} ! "
         f'{QUEUE(name=f"{name}_q")} '
     )
     return tracker_pipeline
+
 
 def CROPPER_PIPELINE(
     inner_pipeline,
@@ -342,9 +404,9 @@ def CROPPER_PIPELINE(
     use_letterbox=True,
     no_scaling_bbox=True,
     internal_offset=True,
-    resize_method='bilinear',
+    resize_method="bilinear",
     bypass_max_size_buffers=20,
-    name='cropper_wrapper'
+    name="cropper_wrapper",
 ):
     """
     Wraps an inner pipeline with hailocropper and hailoaggregator.
@@ -369,19 +431,56 @@ def CROPPER_PIPELINE(
     """
     return (
         f'{QUEUE(name=f"{name}_input_q")} ! '
-        f'hailocropper name={name}_cropper '
-        f'so-path={so_path} '
-        f'function-name={function_name} '
-        f'use-letterbox={str(use_letterbox).lower()} '
-        f'no-scaling-bbox={str(no_scaling_bbox).lower()} '
-        f'internal-offset={str(internal_offset).lower()} '
-        f'resize-method={resize_method} '
-        f'hailoaggregator name={name}_agg '
+        f"hailocropper name={name}_cropper "
+        f"so-path={so_path} "
+        f"function-name={function_name} "
+        f"use-letterbox={str(use_letterbox).lower()} "
+        f"no-scaling-bbox={str(no_scaling_bbox).lower()} "
+        f"internal-offset={str(internal_offset).lower()} "
+        f"resize-method={resize_method} "
+        f"hailoaggregator name={name}_agg "
         # bypass
-        f'{name}_cropper. ! '
+        f"{name}_cropper. ! "
         f'{QUEUE(name=f"{name}_bypass_q", max_size_buffers=bypass_max_size_buffers)} ! {name}_agg.sink_0 '
         # pipeline for the actual inference
-        f'{name}_cropper. ! {inner_pipeline} ! {name}_agg.sink_1 '
+        f"{name}_cropper. ! {inner_pipeline} ! {name}_agg.sink_1 "
         # aggregator output
         f'{name}_agg. ! {QUEUE(name=f"{name}_output_q")} '
     )
+
+
+def TILE_CROPPER_PIPELINE(
+    internal_offset=True,
+    tiles_along_x_axis=3,
+    tiles_along_y_axis=3,
+    overlap_x_axis=0.08,
+    overlap_y_axis=0.08,
+    iou_threshold=0.3,
+):
+    """
+    Generates the tile cropper portion of the GStreamer pipeline string.
+
+    This string starts from the hailotilecropper element through the hailotileaggregator and
+    the linking queues, up to the point where the detection pipeline would be inserted.
+
+    Args:
+        internal_offset (bool, optional): Whether to use internal offsets. Defaults to True.
+        tiles_along_x_axis (int, optional): Number of tiles (columns) along the x axis. Defaults to 4.
+        tiles_along_y_axis (int, optional): Number of tiles (rows) along the y axis. Defaults to 3.
+        overlap_x_axis (float, optional): Overlap percentage between tiles along the x axis. Defaults to 0.08.
+        overlap_y_axis (float, optional): Overlap percentage between tiles along the y axis. Defaults to 0.08.
+        iou_threshold (float, optional): IoU threshold used by the aggregator for non-max suppression.
+                                           Defaults to 0.3.
+
+    Returns:
+        str: The GStreamer pipeline string from the tile cropper element up to the start of the detection pipeline.
+    """
+    tile_cropper_pipeline = (
+        f"hailotilecropper internal-offset={str(internal_offset).lower()} name=cropper "
+        f"tiles-along-x-axis={tiles_along_x_axis} tiles-along-y-axis={tiles_along_y_axis} "
+        f"overlap-x-axis={overlap_x_axis} overlap-y-axis={overlap_y_axis} "
+        f"hailotileaggregator flatten-detections=true iou-threshold={iou_threshold} name=agg "
+        f"cropper. ! queue leaky=no max-size-buffers=3 max-size-bytes=0 max-size-time=0 ! agg. "
+        f"cropper. !"
+    )
+    return tile_cropper_pipeline

@@ -481,6 +481,6 @@ def TILE_CROPPER_PIPELINE(
         f"overlap-x-axis={overlap_x_axis} overlap-y-axis={overlap_y_axis} "
         f"hailotileaggregator flatten-detections=true iou-threshold={iou_threshold} name=agg "
         f"cropper. ! queue leaky=no max-size-buffers=3 max-size-bytes=0 max-size-time=0 ! agg. "
-        f"cropper. !"
+        f"cropper."
     )
     return tile_cropper_pipeline

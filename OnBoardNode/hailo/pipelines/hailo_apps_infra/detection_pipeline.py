@@ -38,7 +38,7 @@ from hailo_apps_infra.gstreamer_app import (
 
 # This class inherits from the hailo_rpi_common.GStreamerApp class
 class GStreamerDetectionApp(GStreamerApp):
-    def __init__(self, app_callback, user_data):
+    def __init__(self, app_callback, user_data, tiling=False):
         parser = get_default_parser()
         parser.add_argument(
             "--labels-json",
@@ -92,12 +92,19 @@ class GStreamerDetectionApp(GStreamerApp):
             f"output-format-type=HAILO_FORMAT_TYPE_FLOAT32"
         )
 
+        self.tiling = tiling
+
         # Set the process title
         setproctitle.setproctitle("Hailo Detection App")
 
         self.create_pipeline()
 
     def get_pipeline_string(self):
+
+        # Generate a different pipeline string if tiling
+        if self.tiling:
+            return self.get_tiled_pipeline_string()
+
         source_pipeline = SOURCE_PIPELINE(
             self.video_source, self.video_width, self.video_height
         )
@@ -123,7 +130,7 @@ class GStreamerDetectionApp(GStreamerApp):
             f"{user_callback_pipeline} ! "
             f"{display_pipeline}"
         )
-        print(pipeline_string)
+
         return pipeline_string
 
     def get_tiled_pipeline_string(self):
@@ -149,16 +156,6 @@ class GStreamerDetectionApp(GStreamerApp):
             video_sink=self.video_sink, sync=self.sync, show_fps=self.show_fps
         )
 
-        PIPELINE = "gst-launch-1.0 $source_element ! \
-    video/x-raw,pixel-aspect-ratio=1/1,format=RGB ! queue leaky=no max-size-buffers=3 max-size-bytes=0 max-size-time=0 ! \
-    $TILE_CROPPER_ELEMENT hailotileaggregator flatten-detections=true iou-threshold=$iou_threshold name=agg \
-    cropper. ! queue leaky=no max-size-buffers=3 max-size-bytes=0 max-size-time=0 ! agg. \
-    cropper. ! $DETECTION_PIPELINE ! agg. \
-    agg. ! queue leaky=no max-size-buffers=3 max-size-bytes=0 max-size-time=0 ! \
-    hailooverlay qos=false ! \
-    queue leaky=no max-size-buffers=3 max-size-bytes=0 max-size-time=0 ! videoconvert qos=false ! \
-    fpsdisplaysink video-sink=$video_sink_element name=hailo_display sync=$sync_pipeline text-overlay=false $additional_parameters"
-
         pipeline_string = (
             f"{source_pipeline} ! "
             f"{tile_cropper_pipeline} ! "
@@ -168,6 +165,7 @@ class GStreamerDetectionApp(GStreamerApp):
             f"{display_pipeline}"
         )
         print(pipeline_string)
+
         return pipeline_string
 
 

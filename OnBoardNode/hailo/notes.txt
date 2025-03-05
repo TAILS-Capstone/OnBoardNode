@@ -1,0 +1,4 @@
+How to track NPU usage:
+
+export HAILO_MONITOR=1
+hailortcli monitor

@@ -144,7 +144,7 @@ queue leaky=no max-size-buffers=3 max-size-bytes=0 max-size-time=0 !
 hailotilecropper internal-offset=true name=cropper tiles-along-x-axis=4 tiles-along-y-axis=3 overlap-x-axis=0.08 overlap-y-axis=0.08 hailotileaggregator flatten-detections=true iou-threshold=0.3 name=agg cropper. ! 
 queue leaky=no max-size-buffers=3 max-size-bytes=0 max-size-time=0 ! agg. cropper. ! 
 queue leaky=no max-size-buffers=3 max-size-bytes=0 max-size-time=0 ! 
-hailonet hef-path=/home/tails/TAILS-Embedded/OnBoardNode/hailo/resources/yolov8s_h8l.hef output-format-type=HAILO_FORMAT_TYPE_FLOAT32 ! 
+hailonet hef-path=/home/tails/TAILS-Embedded/OnBoardNode/hailo/resources/yolov8s_h8l.hef batch-size=16 output-format-type=HAILO_FORMAT_TYPE_FLOAT32 ! 
 queue leaky=no max-size-buffers=3 max-size-bytes=0 max-size-time=0 ! 
 hailofilter name=inference_hailofilter so-path=/home/tails/TAILS-Embedded/OnBoardNode/hailo/pipelines/resources/libyolo_hailortpp_postprocess.so qos=false !
 queue leaky=no max-size-buffers=3 max-size-bytes=0 max-size-time=0 ! agg. agg. !
@@ -152,7 +152,7 @@ queue leaky=no max-size-buffers=3 max-size-bytes=0 max-size-time=0 !
 hailooverlay qos=false !
 queue leaky=no max-size-buffers=3 max-size-bytes=0 max-size-time=0 ! 
 videoconvert qos=false !
-fpsdisplaysink video-sink=xvimagesink name=hailo_display sync=false text-overlay=false"""
+fpsdisplaysink video-sink=xvimagesink name=hailo_display sync=false text-overlay=true"""
 
         source_pipeline = SOURCE_PIPELINE(
             self.video_source,

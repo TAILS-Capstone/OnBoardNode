@@ -3,3 +3,4 @@ setproctitle
 opencv-python
 gdown
 -e ./pipelines
+-e ./

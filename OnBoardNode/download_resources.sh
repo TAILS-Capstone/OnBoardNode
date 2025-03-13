@@ -20,11 +20,17 @@ download_model() {
 
 download_from_drive() {
   local folder_id="$1"
-  echo "Downloading folder with id $folder_id from Google Drive..."
-  gdown --folder "$folder_id" -O "$RESOURCE_DIR" || {
-    echo "Failed to download folder from Google Drive."
-    exit 1
-  }
+  local marker_file="$RESOURCE_DIR/drive_download_complete.marker"
+  if [ -f "$marker_file" ]; then
+    echo "Google Drive resources already downloaded. Skipping download."
+  else
+    echo "Downloading folder with id $folder_id from Google Drive..."
+    gdown --folder "$folder_id" -O "$RESOURCE_DIR" || {
+      echo "Failed to download folder from Google Drive."
+      exit 1
+    }
+    touch "$marker_file"
+  fi
 }
 
 # Define all URLs in arrays

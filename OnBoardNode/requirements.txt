@@ -2,5 +2,8 @@ numpy<2.0.0
 setproctitle
 opencv-python
 gdown
+RPi.GPIO
+git+https://github.com/inmcm/micropyGPS.git
+rpi-lgpio
 -e ./pipelines
--e ./
+-e ./lora_hat/lora

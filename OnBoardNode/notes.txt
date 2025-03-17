@@ -6,3 +6,6 @@ hailortcli monitor
 Refer to this link for environment setup for the LoRa hat:
 
 https://www.waveshare.com/wiki/SX1262_XXXM_LoRaWAN/GNSS_HAT#Environment_Setting
+
+Check pin status:
+gpioinfo

@@ -7,3 +7,8 @@ lgpio
 git+https://github.com/inmcm/micropyGPS.git
 -e ./pipelines
 -e ./lora_hat/lora
+-e ./lora_hat/gps
+srtm.py
+filterpy
+folium
+pandas

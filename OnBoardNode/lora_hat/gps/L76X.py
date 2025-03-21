@@ -3,6 +3,7 @@ import config
 import math
 import time
 from micropyGPS import MicropyGPS
+import srtm
 
 g = MicropyGPS(+8)
 Temp = "0123456789ABCDEF*"
@@ -27,6 +28,9 @@ class L76X(object):
     Lat_Baidu = 0.0
     Lon_Google = 0.0
     Lat_Google = 0.0
+    elevation_above_ground = 0.0
+    speed = 0.0
+    course = 0.0
 
     # Note: The transform functions use the names "Lon_Goodle" and "Lat_Goodle"
     # to remain consistent with the original code logic.
@@ -97,7 +101,7 @@ class L76X(object):
         self.config.Uart_SendByte("\n".encode())
         print(data)
 
-    def L76X_Gat_GNRMC(self):
+    def get_gps_data(self, elevation_data):
         data = ""
         while True:
             if g.valid:
@@ -113,8 +117,8 @@ class L76X(object):
                 data += "\r\n"
                 if "$GNGLL" in data:
                     break
-        self.Lat = g.latitude[0] + g.latitude[1] / 100
-        self.Lon = g.longitude[0] + g.longitude[1] / 100
+        self.Lat = g.latitude[0] + g.latitude[1] / 60
+        self.Lon = g.longitude[0] + g.longitude[1] / 60
         if g.latitude[2] != "N":
             self.Lat = -self.Lat
         if g.longitude[2] != "E":
@@ -122,6 +126,18 @@ class L76X(object):
         self.Time_H = g.timestamp[0]
         self.Time_M = g.timestamp[1]
         self.Time_S = g.timestamp[2]
+
+        ground_elevation = elevation_data.get_elevation(self.Lat, self.Lon)
+
+        print("Altitude ", g.altitude)
+        print("Ground elevation ", ground_elevation)
+
+        if ground_elevation:
+            self.elevation_above_ground = g.altitude - elevation_data.get_elevation(
+                self.Lat, self.Lon
+            )
+        self.speed = g.speed[2]
+        self.course = g.course
         print(data)
         data = "\r\n"
 

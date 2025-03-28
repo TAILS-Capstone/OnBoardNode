@@ -4,6 +4,16 @@ set -e  # Exit immediately if a command exits with a non-zero status
 
 # Source environment variables and activate virtual environment
 echo "Sourcing environment variables and activating virtual environment..."
+
+# Check if hailo-all packages were installed successfully
+if ! dpkg -l | grep -q "hailo-all"; then
+    echo "Installing hailo-all packages..."
+    sudo apt install hailo-all
+    echo "Error: hailo-all packages were not installed successfully."
+    echo "Please reboot your system and run install.sh again."
+    exit 1
+fi
+
 source setup_env.sh
 
 # Install additional system dependencies (if needed)

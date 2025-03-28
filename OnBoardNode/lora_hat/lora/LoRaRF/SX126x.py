@@ -1277,6 +1277,12 @@ class SX126x(BaseLoRa) :
         buf = [opCode]
         for i in range(nAddress) : buf.append(address[i])
         for i in range(nBytes) : buf.append(0x00)
+        print(f"\nSPI Read Debug:")
+        print(f"OpCode: 0x{opCode:02X}")
+        if nAddress > 0:
+            print(f"Address: {' '.join([f'0x{x:02X}' for x in address])}")
+        print(f"Sent: {' '.join([f'0x{x:02X}' for x in buf])}")
         feedback = spi.xfer2(buf)
+        print(f"Received: {' '.join([f'0x{x:02X}' for x in feedback])}")
         lgpio.gpio_write(self._gpio_handle, self._cs_define, 1)
         return tuple(feedback[nAddress+1:])

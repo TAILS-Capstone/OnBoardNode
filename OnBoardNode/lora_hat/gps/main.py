@@ -10,7 +10,7 @@ try:
     gps.L76X_Set_Baudrate(9600)
     gps.L76X_Send_Command(gps.SET_POS_FIX_400MS)
     gps.L76X_Send_Command(gps.SET_NMEA_OUTPUT)
-    # gps.L76X_Send_Command(gps.SET_FULL_COLD_START)
+    gps.L76X_Send_Command(gps.SET_FULL_COLD_START)
 
     elevation_data = srtm.get_data()
 

@@ -4,60 +4,85 @@ sys.path.append(os.path.dirname(os.path.dirname(currentdir)))
 from LoRaRF import SX126x
 import time
 
-# Begin LoRa radio and set NSS, reset, busy, IRQ, txen, and rxen pin with connected Raspberry Pi gpio pins
-# IRQ pin not used in this example (set to -1). Set txen and rxen pin to -1 if RF module doesn't have one
-busId = 0; csId = 0 
-resetPin = 18; busyPin = 20; irqPin = -1; txenPin = 6; rxenPin = -1 
+# Define all parameters upfront
+busId = 0
+csId = 0
+resetPin = 18
+busyPin = 20
+irqPin = -1
+txenPin = 6
+rxenPin = -1
+
+# RF parameters
+frequency = 915000000  # 915 MHz
+txPower = 22          # +22 dBm
+txPowerVersion = SX126x.TX_POWER_SX1262
+
+# Modulation parameters
+sf = 7                # Spreading factor
+bw = 125000          # Bandwidth 125 kHz
+cr = 5               # Coding rate 4/5
+
+# Packet parameters
+headerType = SX126x.HEADER_EXPLICIT
+preambleLength = 12
+payloadLength = 15    # "HeLoRa World!\0" + counter byte
+crcType = True
+syncWord = 0x34
+
+# Initialize LoRa
 LoRa = SX126x()
-print("Begin LoRa radio")
-if not LoRa.begin(busId, csId, resetPin, busyPin, irqPin, txenPin, rxenPin) :
+print(f"Begin LoRa radio with:")
+print(f"\tReset pin: {resetPin}")
+print(f"\tBusy pin: {busyPin}")
+print(f"\tIRQ pin: {irqPin}")
+print(f"\tTXEN pin: {txenPin}")
+print(f"\tRXEN pin: {rxenPin}")
+
+if not LoRa.begin(busId, csId, resetPin, busyPin, irqPin, txenPin, rxenPin):
     raise Exception("Something wrong, can't begin LoRa radio")
 
 LoRa.setDio2RfSwitch()
-# Set frequency to 915 Mhz
-print("Set frequency to 915 Mhz")
-LoRa.setFrequency(915000000)
 
-# Set TX power, default power for SX1262 and SX1268 are +22 dBm and for SX1261 is +14 dBm
-# This function will set PA config with optimal setting for requested TX power
-print("Set TX power to +22 dBm")
-LoRa.setTxPower(22, LoRa.TX_POWER_SX1262)                       # TX power +17 dBm using PA boost pin
+# Set frequency
+print(f"Set frequency to {frequency/1000000} MHz")
+LoRa.setFrequency(frequency)
 
-# Configure modulation parameter including spreading factor (SF), bandwidth (BW), and coding rate (CR)
-# Receiver must have same SF and BW setting with transmitter to be able to receive LoRa packet
-print("Set modulation parameters:\n\tSpreading factor = 7\n\tBandwidth = 125 kHz\n\tCoding rate = 4/5")
-sf = 7                                                          # LoRa spreading factor: 7
-bw = 125000                                                     # Bandwidth: 125 kHz
-cr = 5                                                          # Coding rate: 4/5
+# Set TX power
+print(f"Set TX power to +{txPower} dBm")
+LoRa.setTxPower(txPower, txPowerVersion)
+
+# Configure modulation parameters
+print("Set modulation parameters:")
+print(f"\tSpreading factor = {sf}")
+print(f"\tBandwidth = {bw/1000} kHz")
+print(f"\tCoding rate = 4/{cr}")
 LoRa.setLoRaModulation(sf, bw, cr)
 
-# Configure packet parameter including header type, preamble length, payload length, and CRC type
-# The explicit packet includes header contain CR, number of byte, and CRC type
-# Receiver can receive packet with different CR and packet parameters in explicit header mode
-print("Set packet parameters:\n\tImplicit header type\n\tPreamble length = 12\n\tPayload Length = 15\n\tCRC on")
-headerType = LoRa.HEADER_IMPLICIT                              # Explicit header mode
-preambleLength = 12                                             # Set preamble length to 12
-payloadLength = 15                                              # Initialize payloadLength to 15
-crcType = True                                                  # Set CRC enable
+# Configure packet parameters
+print("Set packet parameters:")
+print(f"\t{'Implicit' if headerType == SX126x.HEADER_IMPLICIT else 'Explicit'} header type")
+print(f"\tPreamble length = {preambleLength}")
+print(f"\tPayload Length = {payloadLength}")
+print(f"\tCRC {'on' if crcType else 'off'}")
 LoRa.setLoRaPacket(headerType, preambleLength, payloadLength, crcType)
 
-# Set syncronize word for public network (0x34)
-print("Set syncronize word to 0x34")
-LoRa.setSyncWord(0x34)
+# Set synchronize word
+print(f"Set syncronize word to 0x{syncWord:02X}")
+LoRa.setSyncWord(syncWord)
 
 print("\n-- LoRa Transmitter --\n")
 
 # Message to transmit
 message = "HeLoRa World!\0"
 messageList = list(message)
-for i in range(len(messageList)) : messageList[i] = ord(messageList[i])
+for i in range(len(messageList)):
+    messageList[i] = ord(messageList[i])
 counter = 0
 
 # Transmit message continuously
-while True :
-
+while True:
     # Transmit message and counter
-    # write() method must be placed between beginPacket() and endPacket()
     LoRa.beginPacket()
     LoRa.write(messageList, len(messageList))
     LoRa.write([counter], 1)
@@ -70,13 +95,14 @@ while True :
     LoRa.wait()
 
     # Print transmit time and data rate
-    print("Transmit time: {0:0.2f} ms | Data rate: {1:0.2f} byte/s".format(LoRa.transmitTime(), LoRa.dataRate()))
+    print("Transmit time: {0:0.2f} ms | Data rate: {1:0.2f} byte/s".format(
+        LoRa.transmitTime(), LoRa.dataRate()))
 
-    # Don't load RF module with continous transmit
+    # Don't load RF module with continuous transmit
     time.sleep(5)
     counter = (counter + 1) % 256
 
-try :
+try:
     pass
-except :
+except:
     LoRa.end()

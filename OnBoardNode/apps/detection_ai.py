@@ -24,9 +24,9 @@ class DetectionWithGPS(app_callback_class):
         self.detection_count = 0
         
     def get_location_data(self):
+        lat, lon, elevation = self.gps_manager.get_current_location()
+        speed, course = self.gps_manager.get_speed_and_course()
         if self.gps_manager.is_positioned:
-            lat, lon, elevation = self.gps_manager.get_current_location()
-            speed, course = self.gps_manager.get_speed_and_course()
             return {
                 "latitude": lat,
                 "longitude": lon,

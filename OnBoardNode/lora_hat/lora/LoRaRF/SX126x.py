@@ -1268,6 +1268,11 @@ class SX126x(BaseLoRa) :
         lgpio.gpio_write(self._gpio_handle, self._cs_define, 0)
         buf = [opCode]
         for i in range(nBytes) : buf.append(data[i])
+        print(f"\nSPI Write Debug:")
+        print(f"OpCode: 0x{opCode:02X}")
+        if nBytes > 0:
+            print(f"Data: {' '.join([f'0x{x:02X}' for x in data])}")
+        print(f"Sent: {' '.join([f'0x{x:02X}' for x in buf])}")
         spi.xfer2(buf)
         lgpio.gpio_write(self._gpio_handle, self._cs_define, 1)
 

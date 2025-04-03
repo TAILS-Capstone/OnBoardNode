@@ -135,7 +135,11 @@ class GStreamerDetectionApp(GStreamerApp):
         return pipeline_string
 
     def get_tiled_pipeline_string(self):
+        """Get the tiled pipeline string using RPI camera source.
 
+        Returns:
+            str: The complete GStreamer pipeline string for tiled inference with RPI camera.
+        """
         return """filesrc location=/home/tails/TAILS-Embedded/OnBoardNode/resources/DJI_0501_10fps.MP4 name=src_0 !
 decodebin ! 
 videoconvert qos=false ! 
@@ -153,40 +157,6 @@ hailooverlay qos=false !
 queue leaky=no max-size-buffers=3 max-size-bytes=0 max-size-time=0 ! 
 videoconvert qos=false !
 fpsdisplaysink video-sink=xvimagesink name=hailo_display sync=false text-overlay=true"""
-
-        source_pipeline = SOURCE_PIPELINE(
-            self.video_source,
-            self.video_width,
-            self.video_height,
-            preserve_input_resolution=True,
-        )
-        tile_cropper_pipeline = TILE_CROPPER_PIPELINE()
-        detection_pipeline = INFERENCE_PIPELINE(
-            hef_path=self.hef_path,
-            post_process_so=self.post_process_so,
-            post_function_name=self.post_function_name,
-            batch_size=self.batch_size,
-            config_json=self.labels_json,
-            additional_params=self.thresholds_str,
-        )
-
-        tracker_pipeline = TRACKER_PIPELINE(class_id=1)
-        user_callback_pipeline = USER_CALLBACK_PIPELINE()
-        display_pipeline = DISPLAY_PIPELINE(
-            video_sink=self.video_sink, sync=self.sync, show_fps=self.show_fps
-        )
-
-        pipeline_string = (
-            f"{source_pipeline} ! "
-            f"{tile_cropper_pipeline} ! "
-            f"{detection_pipeline} ! "
-            f"{tracker_pipeline} ! "
-            f"{user_callback_pipeline} ! "
-            f"{display_pipeline}"
-        )
-        print(pipeline_string)
-
-        return pipeline_string
 
 
 if __name__ == "__main__":

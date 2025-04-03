@@ -39,9 +39,6 @@ print(f"\tIRQ pin: {irqPin}")
 print(f"\tTXEN pin: {txenPin}")
 print(f"\tRXEN pin: {rxenPin}")
 
-# cold start
-# LoRa.setSleep(SX126x.SLEEP_COLD_START)
-
 if not LoRa.begin(busId, csId, resetPin, busyPin, irqPin, txenPin, rxenPin):
     raise Exception("Something wrong, can't begin LoRa radio")
 

@@ -27,3 +27,25 @@ TAILS-Embedded/
 └── README.md               # This document
 ```
 
+## Bill of Materials (BOM)
+
+Below is a detailed list of hardware components used for the **TAILS Embedded System**, with all costs shown after tax.
+
+### 🔧 Hardware Components
+
+| Item Description | Quantity | Cost After Tax ($) |
+|------------------|----------|---------------------|
+| [Raspberry Pi Zero 2 W + AI Camera + Accessories](https://www.raspberrypi.com/products/raspberry-pi-zero-2-w/) | 1 | 240.01 |
+| [Raspberry Pi 5 (16GB) + Accessories](https://www.pishop.ca/product/raspberry-pi-5-16gb/?src=raspberrypi) | 1 | 304.30 |
+| [Raspberry Pi HQ Camera + Lens](https://www.raspberrypi.com/products/ai-camera/) | 1 | 137.24 |
+| [USB to LoRa Dongle](https://www.pishop.ca/product/usb-to-lora-dongle-915-mhz/) | 1 | Included Above |
+| [Heltec LoRa Board (Base Station)](https://www.amazon.ca/-/fr/gp/product/B086ZFCV7F?smid=A2RJ79XBQX6W3M&psc=1) | 1 | 41.69 |
+| [SX1262 LoRa Hat](https://www.amazon.ca/SX1262-LoRaWAN-GNSS-HAT-Expansion/dp/B0D4DPB68J) | 1 | 52.93 |
+| [AI Accelerator Hat (Hailo-8L)](https://hailo.ai) | 1 | 123.06 |
+| [PHAT-GPM GPS Module](https://canada.newark.com/designer-systems/phat-gpm/gps-module-raspberry-pi-rohs-compliant/dp/45AJ6805) | 1 | 55.99 |
+| [Raspberry Pi UPS Power HAT](https://www.pishop.ca/product/uninterruptible-power-supply-ups-hat-for-raspberry-pi-zero-stable-5v-power-output/) | 1 | 77.79 |
+| [Adjustable Camera Mount](https://www.pishop.ca/product/universal-tilt-adjustable-mount-for-raspberry-pi-camera/) | 1 | 35.65 |
+| Drone Parts (Motors, Frame, ESC, etc.) | — | 754.77 |
+| Accessories (Cables, spacers, mounts, etc.) | — | 159.67 |
+| [Drone Assembly Fee (StansUAV)](https://stansuav.ca/) | 1 | 339.00 |
+| **Total Project Cost** | — | **2,322.10** |

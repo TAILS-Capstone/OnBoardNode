@@ -159,6 +159,7 @@ cython_debug/
 # hailo-rpi5-examples specific
 venv_TAILS_cv/*
 resources/
+map_plots/
 *.html
 gstshark*/
 # Byte-compiled files

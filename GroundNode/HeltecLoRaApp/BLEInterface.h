@@ -65,16 +65,17 @@ public:
     // Handles Reconnection of BLE Device
     void handleReconnection();
 
-    // Set the Characteristic Value
+    // Set the Characteristic Value (single byte)
     void setValue(uint8_t value);
+
+    // Set the Characteristic Value (array of bytes)
+    void setValue(uint8_t* data, size_t length);
 
     // Get the Characteristic Value
     uint32_t getValue();
 
     // Notify the device of a new value
     void notify();
-
-
 
 };
 

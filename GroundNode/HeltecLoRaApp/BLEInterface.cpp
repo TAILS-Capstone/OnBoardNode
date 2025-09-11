@@ -114,6 +114,12 @@ void BLEInterface::setValue(uint8_t value) {
     }
 }
 
+void BLEInterface::setValue(uint8_t* data, size_t length) {
+    if (this->deviceConnected) {
+        this->pCharacteristic->setValue(data, length);
+    }
+}
+
 uint32_t BLEInterface::getValue() {
     return this->value;
 }

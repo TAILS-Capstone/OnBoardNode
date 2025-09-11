@@ -85,7 +85,7 @@ def detection_callback(pad, info, user_data):
         print(f"Detection: ID: {track_id} Label: {label} Confidence: {confidence:.2f} {gps_info}")
 
         # Log detection info to CSV only if GPS fix is available
-        if location_data:
+        if location_data and confidence > 0.8:
             timestamp = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
             
             with open(CSV_FILE, "a") as csv_file:

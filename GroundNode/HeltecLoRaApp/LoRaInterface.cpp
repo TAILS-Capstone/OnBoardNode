@@ -1,10 +1,9 @@
-/* 
+/*
  * File:   LoRaInterface.c
  * Author: JDazogbo
  *
  * Created on September 11, 2025, 1:31 PM
  */
-
 
 /*---------------- Include Files ------------------*/
 
@@ -19,9 +18,9 @@ int16_t LoRaInterface::rssi;
 int16_t LoRaInterface::rxSize;
 bool LoRaInterface::lora_idle = true;
 
-
 // Free function callback for RxDone
-void onRxDone(uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr) {
+void onRxDone(uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr)
+{
     memcpy(LoRaInterface::rxpacket, payload, size);
     LoRaInterface::rxpacket[size] = '\0';
     LoRaInterface::rssi = rssi;
@@ -33,7 +32,8 @@ void onRxDone(uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr) {
 
 /*---------------- LoRa Module Class Declaration ------------------*/
 
-LoRaInterface::LoRaInterface(uint8_t rfFrequency, uint8_t outputPower) {
+LoRaInterface::LoRaInterface(uint8_t rfFrequency, uint8_t outputPower)
+{
     Mcu.begin(HELTEC_BOARD, SLOW_CLK_TPYE);
     txNumber = 0;
     rssi = 0;
@@ -43,20 +43,18 @@ LoRaInterface::LoRaInterface(uint8_t rfFrequency, uint8_t outputPower) {
     Radio.SetChannel(rfFrequency);
     Radio.SetPublicNetwork(true);
     Radio.SetRxConfig(MODEM_LORA, LORA_BANDWIDTH, LORA_SPREADING_FACTOR,
-                     LORA_CODINGRATE, 0, LORA_PREAMBLE_LENGTH,
-                     LORA_SYMBOL_TIMEOUT, LORA_FIX_LENGTH_PAYLOAD_ON,
-                     BUFFER_SIZE, true, 0, 0, LORA_IQ_INVERSION_ON, true);
+                      LORA_CODINGRATE, 0, LORA_PREAMBLE_LENGTH,
+                      LORA_SYMBOL_TIMEOUT, LORA_FIX_LENGTH_PAYLOAD_ON,
+                      BUFFER_SIZE, true, 0, 0, LORA_IQ_INVERSION_ON, true);
 }
 
-void LoRaInterface::getMessages() {
-    if (lora_idle) {
+void LoRaInterface::getMessages()
+{
+    if (lora_idle)
+    {
         lora_idle = false;
         Serial.println("into RX mode");
         Radio.Rx(0);
     }
     Radio.IrqProcess();
 }
-
-
-
-

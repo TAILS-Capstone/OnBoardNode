@@ -32,7 +32,7 @@ void onRxDone(uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr)
 
 /*---------------- LoRa Module Class Declaration ------------------*/
 
-LoRaInterface::LoRaInterface(uint8_t rfFrequency, uint8_t outputPower)
+LoRaInterface::LoRaInterface(uint32_t rfFrequency, uint8_t outputPower)
 {
     Mcu.begin(HELTEC_BOARD, SLOW_CLK_TPYE);
     txNumber = 0;

@@ -50,7 +50,7 @@ public:
     static int16_t rssi, rxSize;
     static bool lora_idle;
 
-    LoRaInterface(uint8_t rfFrequency, uint8_t outputPower);
+    LoRaInterface(uint32_t rfFrequency, uint8_t outputPower);
     static void getMessages();
 };
 

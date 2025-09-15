@@ -133,5 +133,5 @@ void loop()
         bleServer->handleReconnection();
         Serial.println("Device connected!");
     }
-    LoRaInterface::getMessages();
+    LoRaInterface::checkMessageQueue();
 }

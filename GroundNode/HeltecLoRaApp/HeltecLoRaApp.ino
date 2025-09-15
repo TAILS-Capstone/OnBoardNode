@@ -7,11 +7,15 @@
 
 /*---------------- Include Files ------------------*/
 
+// BLE Includes
 #include <BLEDevice.h>
 #include <BLEUtils.h>
 #include <BLE2902.h>
 #include <BLE2901.h>
 #include <BLEInterface.h>
+
+// LoRa Includes
+#include <LoRaInterface.h>
 
 // Standard Bluetooth SIG Location and Navigation Service UUID
 #define LOCATION_SERVICE_UUID        "1819"
@@ -51,7 +55,7 @@ void setup() {
     
     // Initialize BLE Server with Location and Navigation Service
     bleServer = new BLEInterface("TailsGPS", LOCATION_SERVICE_UUID, LOCATION_CHARACTERISTIC_UUID, "GPS Location Data");
-    
+    LoRaInterface loraServer(915000000, 22);
     // Start the BLE service
     bleServer->start();
     Serial.println("Waiting for a client to connect...");
@@ -123,4 +127,5 @@ void loop() {
         bleServer->handleReconnection();
         Serial.println("Device connected!");
     }
+    LoRaInterface::getMessages();
 }

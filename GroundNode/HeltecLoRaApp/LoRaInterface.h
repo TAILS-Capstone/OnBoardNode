@@ -43,15 +43,20 @@
 class LoRaInterface
 {
 public:
-    static char txpacket[BUFFER_SIZE];
-    static char rxpacket[BUFFER_SIZE];
+    static uint8_t txpacket[BUFFER_SIZE];
+    static uint8_t rxpacket[BUFFER_SIZE];
     static RadioEvents_t RadioEvents;
     static int16_t txNumber;
     static int16_t rssi, rxSize;
     static bool lora_idle;
 
     LoRaInterface(uint32_t rfFrequency, uint8_t outputPower);
-    static void getMessages();
+
+    static void checkMessageQueue();
+
+    static uint8_t *getRxPacket();
+    static int16_t getRssi();
+    static int16_t getRxSize();
 };
 
 void onRxDone(uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr);

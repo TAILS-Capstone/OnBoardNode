@@ -9,8 +9,8 @@
 
 #include <LoRaInterface.h>
 
-char LoRaInterface::txpacket[BUFFER_SIZE];
-char LoRaInterface::rxpacket[BUFFER_SIZE];
+uint8_t LoRaInterface::txpacket[BUFFER_SIZE];
+uint8_t LoRaInterface::rxpacket[BUFFER_SIZE];
 RadioEvents_t LoRaInterface::RadioEvents;
 
 int16_t LoRaInterface::txNumber;
@@ -48,7 +48,7 @@ LoRaInterface::LoRaInterface(uint32_t rfFrequency, uint8_t outputPower)
                       BUFFER_SIZE, true, 0, 0, LORA_IQ_INVERSION_ON, true);
 }
 
-void LoRaInterface::getMessages()
+void LoRaInterface::checkMessageQueue()
 {
     if (lora_idle)
     {
@@ -57,4 +57,16 @@ void LoRaInterface::getMessages()
         Radio.Rx(0);
     }
     Radio.IrqProcess();
+}
+
+uint8_t *LoRaInterface::getRxPacket()
+{
+    if (rxSize > 0)
+    {
+        return rxpacket;
+    }
+    else
+    {
+        return nullptr;
+    }
 }

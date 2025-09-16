@@ -1,4 +1,4 @@
-from .base import BaseLoRa
+from apps.dependencies.lora.base import BaseLoRa
 import spidev
 import lgpio
 import time

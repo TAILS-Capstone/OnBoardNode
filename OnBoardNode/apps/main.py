@@ -24,7 +24,7 @@ from hailo_apps_infra.detection_pipeline import GStreamerDetectionApp
 # ----------------------------
 # LoRa imports and parameters
 # ----------------------------
-from apps.dependencies.lora.LoRaRF import SX126x
+from apps.dependencies.lora import SX126x
 
 LORA_CFG = {
     "busId": 0,

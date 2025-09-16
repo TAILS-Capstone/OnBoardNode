@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   BLEInterface.h
  * Author: JDazogbo
  *
@@ -6,8 +6,7 @@
  */
 
 #ifndef BLEINTERFACE_H
-#define	BLEINTERFACE_H
-
+#define BLEINTERFACE_H
 
 /*---------------- Include Files ------------------*/
 
@@ -22,10 +21,10 @@
 
 /*---------------- BLE Server Class Declaration ------------------*/
 
-class BLEInterface {
+class BLEInterface
+{
 
 private:
-
     BLEServer *pServer;
     BLEService *pService;
     BLECharacteristic *pCharacteristic;
@@ -35,24 +34,23 @@ private:
     bool deviceConnected = false;
     bool oldDeviceConnected = false;
     uint8_t value = 0;
-    
-public:
 
+public:
     // Constructor
     BLEInterface(String deviceName, String serviceUUID, String characteristicUUID, String description);
 
     // Getter For the BLEServer
-    BLEServer* getBLEServer();
-        
+    BLEServer *getBLEServer();
+
     // Start the BLE Server
     void start();
 
     // Sets the device Connection Status
     void setDeviceConnected(bool connected);
-            
+
     // Check if a device is connected
     bool isConnected();
-    
+
     // Check if device recently disconnected
     bool deviceRecentlyDisconnected();
 
@@ -69,31 +67,27 @@ public:
     void setValue(uint8_t value);
 
     // Set the Characteristic Value (array of bytes)
-    void setValue(uint8_t* data, size_t length);
+    void setValue(uint8_t *data, size_t length);
 
     // Get the Characteristic Value
     uint32_t getValue();
 
     // Notify the device of a new value
     void notify();
-
 };
 
 /*---------------- BLE Connection Callbacks Class Declaration ------------------*/
 
 // BLEConnectionCallbacks class to handle connection events
-class BLEConnectionCallbacks : public BLEServerCallbacks {
+class BLEConnectionCallbacks : public BLEServerCallbacks
+{
 private:
-    BLEInterface *pInterface;  // Pointer to BLEInterface instance
+    BLEInterface *pInterface; // Pointer to BLEInterface instance
 
 public:
-    BLEConnectionCallbacks(BLEInterface *pInterface);  // Constructor
-    void onConnect(BLEServer *pServer);  // Handles connection event
-    void onDisconnect(BLEServer *pServer);  // Handles disconnection event
+    BLEConnectionCallbacks(BLEInterface *pInterface); // Constructor
+    void onConnect(BLEServer *pServer);               // Handles connection event
+    void onDisconnect(BLEServer *pServer);            // Handles disconnection event
 };
 
-
-
-
-
-#endif	/* BLEINTERFACE_H */
+#endif /* BLEINTERFACE_H */

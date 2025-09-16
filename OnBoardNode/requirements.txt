@@ -6,8 +6,9 @@ gpiozero
 lgpio
 git+https://github.com/inmcm/micropyGPS.git
 -e ./pipelines
--e ./lora_hat/lora
--e ./lora_hat/gps
+
+-e ./apps/dependencies/lora
+-e ./apps/dependencies/gps
 srtm.py
 filterpy
 folium

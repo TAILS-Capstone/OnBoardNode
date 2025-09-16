@@ -12,7 +12,7 @@ import threading
 from collections import deque
 import pandas as pd
 
-from apps.dependencies.lora_hat.gps.gps_manager import GPSManager
+from apps.dependencies.gps.gps_manager import GPSManager
 
 from hailo_apps_infra.hailo_rpi_common import (
     get_caps_from_pad,
@@ -24,7 +24,7 @@ from hailo_apps_infra.detection_pipeline import GStreamerDetectionApp
 # ----------------------------
 # LoRa imports and parameters
 # ----------------------------
-from apps.dependencies.lora_hat.lora.LoRaRF import SX126x
+from apps.dependencies.lora.LoRaRF import SX126x
 
 LORA_CFG = {
     "busId": 0,

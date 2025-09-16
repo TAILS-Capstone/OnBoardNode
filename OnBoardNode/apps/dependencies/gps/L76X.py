@@ -1,5 +1,5 @@
 import lgpio
-from apps.dependencies.lora_hat.gps import config
+from apps.dependencies.gps import config
 import math
 import time
 from micropyGPS import MicropyGPS

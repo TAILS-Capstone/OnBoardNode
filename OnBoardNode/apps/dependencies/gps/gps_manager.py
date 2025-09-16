@@ -1,5 +1,5 @@
 import time
-import apps.dependencies.lora_hat.gps.L76X as L76X
+import apps.dependencies.gps.L76X as L76X
 import srtm
 from typing import Tuple
 

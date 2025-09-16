@@ -9,29 +9,29 @@ Date: 3 July 2025
 **T.A.I.L.S.** (Tactical Aerial Insight and Localization Suite) is a drone-based **Point-of-Interest (POI)** mapping solution designed to enhance search and rescue operations, wildlife monitoring, and coastal surveillance. The system integrates **AI-powered image recognition** with **GPS tracking** to detect and mark important locations on an interactive map within a mobile application. This project involves expertise in **artificial intelligence**, **real-time embedded programming**, **wireless communication**, and **network security**.
 
 <div align="center">
-  <img src="Ressources/Images/AssembledDrone.png" alt="Assembled Drone" style="width:70%;" />
+  <img src="Resources/Images/AssembledDrone.png" alt="Assembled Drone" style="width:70%;" />
   <p><em>Figure 1: Assembled drone without onboard module mounted</em></p>
 </div>
 
 <div align="center">
-  <img src="Ressources/Images/CameraMount.webp" alt="Camera Mount Design" style="width:70%;" />
+  <img src="Resources/Images/CameraMount.webp" alt="Camera Mount Design" style="width:70%;" />
   <p><em>Figure 2: Custom adjustable mount for Raspberry Pi High Quality Camera</em></p>
 </div>
 
 <div align="center">
-  <img src="Ressources/Images/CameraMountInference.webp" alt="Camera Feed Inference" style="width:70%;" />
+  <img src="Resources/Images/CameraMountInference.webp" alt="Camera Feed Inference" style="width:70%;" />
   <p><em>Figure 4: Inference results from the onboard AI camera system</em></p>
 </div>
 
 This repository contains the embedded software developed for the **TAILS** (Tactical Aerial Insight and Localization Suite) system. The embedded code runs on a [Heltec WiFi LoRa 32 (V3)](https://heltec.org/project/wifi-lora-32-v3/) board and is responsible for communication, telemetry, and interfacing with onboard sensors (e.g. GPS, IMU). The firmware enables reliable transmission of drone location and sensor data via LoRa to a centralized receiver station.
 
 <div align="center">
-  <img src="Ressources/Images/BLEGPSLocation.png" alt="BLE GPS Location Debug View" style="width:45%;" />
+  <img src="Resources/Images/BLEGPSLocation.png" alt="BLE GPS Location Debug View" style="width:45%;" />
   <p><em>Figure 3: BLE debug interface showing real-time GPS location data</em></p>
 </div>
 
 <div align="center">
-  <img src="Ressources/Images/GPSMappingPOI.png" alt="Map with POI" style="width:70%;" />
+  <img src="Resources/Images/GPSMappingPOI.png" alt="Map with POI" style="width:70%;" />
   <p><em>Figure 5: Interactive map highlighting Points of Interest based on GPS data</em></p>
 </div>
 

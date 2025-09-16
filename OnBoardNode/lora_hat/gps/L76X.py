@@ -99,7 +99,7 @@ class L76X(object):
         self.config.Uart_SendString(data.encode())
         self.config.Uart_SendByte("\r".encode())
         self.config.Uart_SendByte("\n".encode())
-        print(data)
+        # print(data)
 
     def get_gps_data(self, elevation_data):
         data = ""
@@ -129,8 +129,8 @@ class L76X(object):
 
         ground_elevation = elevation_data.get_elevation(self.Lat, self.Lon)
 
-        print("Altitude ", g.altitude)
-        print("Ground elevation ", ground_elevation)
+        # print("Altitude ", g.altitude)
+        # print("Ground elevation ", ground_elevation)
 
         if ground_elevation:
             self.elevation_above_ground = g.altitude - elevation_data.get_elevation(
@@ -138,7 +138,7 @@ class L76X(object):
             )
         self.speed = g.speed[2]
         self.course = g.course
-        print(data)
+        # print(data)
         data = "\r\n"
 
     def transformLat(self, x, y):

@@ -5,10 +5,8 @@ gdown
 gpiozero
 lgpio
 git+https://github.com/inmcm/micropyGPS.git
+-e .
 -e ./pipelines
-
--e ./apps/dependencies/lora
--e ./apps/dependencies/gps
 srtm.py
 filterpy
 folium

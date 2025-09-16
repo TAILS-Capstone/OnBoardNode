@@ -54,7 +54,7 @@ public:
 
     static void checkMessageQueue();
 
-    static uint8_t *getRxPacket();
+    static void getRxPacket(uint8_t *dataLoc);
     static int16_t getRssi();
     static int16_t getRxSize();
 };

@@ -16,7 +16,7 @@ RadioEvents_t LoRaInterface::RadioEvents;
 int16_t LoRaInterface::txNumber;
 int16_t LoRaInterface::rssi;
 int16_t LoRaInterface::rxSize;
-bool LoRaInterface::lora_idle = true;
+bool LoRaInterface::lora_idle;
 
 // Free function callback for RxDone
 void onRxDone(uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr)
@@ -26,7 +26,6 @@ void onRxDone(uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr)
     LoRaInterface::rssi = rssi;
     LoRaInterface::rxSize = size;
     Radio.Sleep();
-    Serial.printf("\r\nreceived packet \"%s\" with rssi %d , length %d\r\n", LoRaInterface::rxpacket, LoRaInterface::rssi, LoRaInterface::rxSize);
     LoRaInterface::lora_idle = true;
 }
 
@@ -53,20 +52,30 @@ void LoRaInterface::checkMessageQueue()
     if (lora_idle)
     {
         lora_idle = false;
-        Serial.println("into RX mode");
         Radio.Rx(0);
     }
     Radio.IrqProcess();
 }
 
-uint8_t *LoRaInterface::getRxPacket()
+void LoRaInterface::getRxPacket(uint8_t *dataLoc)
 {
-    if (rxSize > 0)
+    if (LoRaInterface::rxSize > 0)
     {
-        return rxpacket;
+        // Print before and after execution
+        memcpy(dataLoc, LoRaInterface::rxpacket, LoRaInterface::rxSize);
     }
     else
     {
-        return nullptr;
+        dataLoc = nullptr;
     }
+}
+
+int16_t LoRaInterface::getRssi()
+{
+    return LoRaInterface::rssi;
+}
+
+int16_t LoRaInterface::getRxSize()
+{
+    return LoRaInterface::rxSize;
 }

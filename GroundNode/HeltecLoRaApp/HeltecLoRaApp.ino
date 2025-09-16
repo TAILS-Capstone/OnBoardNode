@@ -68,55 +68,18 @@ void loop()
     // If device is connected, send location updates
     if (bleServer->isConnected())
     {
-        // Get current location
-        GPSLocation &loc = locations[currentLocationIndex];
+        // Check queue for messages
+        LoRaInterface::checkMessageQueue();
 
         // Pack location data into a byte array
-        uint8_t locationData[16];
+        uint8_t locationData[LoRaInterface::getRxSize()];
 
-        // Latitude (4 bytes)
-        locationData[0] = loc.latitude & 0xFF;
-        locationData[1] = (loc.latitude >> 8) & 0xFF;
-        locationData[2] = (loc.latitude >> 16) & 0xFF;
-        locationData[3] = (loc.latitude >> 24) & 0xFF;
-
-        // Longitude (4 bytes)
-        locationData[4] = loc.longitude & 0xFF;
-        locationData[5] = (loc.longitude >> 8) & 0xFF;
-        locationData[6] = (loc.longitude >> 16) & 0xFF;
-        locationData[7] = (loc.longitude >> 24) & 0xFF;
-
-        // Speed (4 bytes) - in mm/s (0.001 m/s resolution)
-        locationData[8] = loc.speed & 0xFF;
-        locationData[9] = (loc.speed >> 8) & 0xFF;
-        locationData[10] = (loc.speed >> 16) & 0xFF;
-        locationData[11] = (loc.speed >> 24) & 0xFF;
-
-        // Heading (4 bytes) - in 0.01 degrees
-        locationData[12] = loc.heading & 0xFF;
-        locationData[13] = (loc.heading >> 8) & 0xFF;
-        locationData[14] = (loc.heading >> 16) & 0xFF;
-        locationData[15] = (loc.heading >> 24) & 0xFF;
+        // Store the packet in app memory
+        LoRaInterface::getRxPacket(locationData);
 
         // Send location data
-        bleServer->setValue(locationData, 16);
+        bleServer->setValue(locationData, LoRaInterface::getRxSize());
         bleServer->notify();
-
-        // Print location for debugging (convert back to human-readable format)
-        Serial.print("Location: ");
-        Serial.print((float)loc.latitude / LAT_LON_SCALE, 7);
-        Serial.print(", ");
-        Serial.print((float)loc.longitude / LAT_LON_SCALE, 7);
-        Serial.print(" Speed: ");
-        Serial.print((float)loc.speed / SPEED_SCALE, 3);
-        Serial.print(" m/s Heading: ");
-        Serial.print((float)loc.heading / HEADING_SCALE, 2);
-        Serial.println("°");
-
-        // Move to next location
-        currentLocationIndex = (currentLocationIndex + 1) % NUM_LOCATIONS;
-
-        delay(2000); // Update every 2 seconds
     }
 
     // Handle device disconnection
@@ -125,6 +88,7 @@ void loop()
         Serial.println("Device disconnected!");
         bleServer->handleDisconnection();
         Serial.println("Waiting for a client to connect...");
+        
     }
 
     // Handle device reconnection
@@ -133,5 +97,4 @@ void loop()
         bleServer->handleReconnection();
         Serial.println("Device connected!");
     }
-    LoRaInterface::checkMessageQueue();
 }

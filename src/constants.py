@@ -29,3 +29,5 @@ BATCH_INTERVAL_SEC = 2.0
 DEDUP_DISTANCE_M = 10.0                 # do not send multiple detections of same person within 10m
 DATA_MAX_AGE_SEC = 5 * 60              # retain last 5 minutes
 DATA_MAX_ROWS = 5000                    # hard cap to avoid runaway memory
+
+RELEVANT_CLASSES = {"person"}

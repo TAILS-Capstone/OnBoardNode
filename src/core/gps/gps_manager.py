@@ -1,5 +1,5 @@
 import time
-import dependencies.gps.L76X as L76X
+import core.gps.L76X as L76X
 import srtm
 from typing import Tuple
 

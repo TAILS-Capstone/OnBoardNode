@@ -12,7 +12,7 @@ import time
 import signal
 import threading
 import subprocess
-from dependencies.video_processor.hailo_apps_infra.gstreamer_app import (
+from core.video_processor.hailo_apps_infra.gstreamer_app import (
     app_callback_class
 )
 

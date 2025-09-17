@@ -1,4 +1,4 @@
-from dependencies.transmitter import SX126x
+from core.transmitter import SX126x
 
 LORA_CFG = {
     "busId": 0,

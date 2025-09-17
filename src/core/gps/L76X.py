@@ -1,5 +1,5 @@
 import lgpio
-from dependencies.gps import config
+from core.gps import config
 import math
 import time
 from micropyGPS import MicropyGPS

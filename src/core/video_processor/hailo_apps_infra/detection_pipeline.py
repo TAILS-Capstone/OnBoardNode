@@ -10,11 +10,11 @@ import setproctitle
 import cv2
 import time
 import hailo
-from dependencies.video_processor.hailo_apps_infra.hailo_rpi_common import (
+from core.video_processor.hailo_apps_infra.hailo_rpi_common import (
     get_default_parser,
     detect_hailo_arch,
 )
-from dependencies.video_processor.hailo_apps_infra.gstreamer_helper_pipelines import (
+from core.video_processor.hailo_apps_infra.gstreamer_helper_pipelines import (
     QUEUE,
     SOURCE_PIPELINE,
     INFERENCE_PIPELINE,
@@ -24,7 +24,7 @@ from dependencies.video_processor.hailo_apps_infra.gstreamer_helper_pipelines im
     USER_CALLBACK_PIPELINE,
     DISPLAY_PIPELINE,
 )
-from dependencies.video_processor.hailo_apps_infra.gstreamer_app import (
+from core.video_processor.hailo_apps_infra.gstreamer_app import (
     GStreamerApp,
     app_callback_class,
     dummy_callback,

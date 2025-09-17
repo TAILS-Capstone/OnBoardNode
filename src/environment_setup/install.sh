@@ -14,7 +14,7 @@ if ! dpkg -l | grep -q "hailo-all"; then
     exit 1
 fi
 
-source setup_env.sh
+source environment_setup/setup_env.sh
 
 # Install additional system dependencies (if needed)
 echo "Installing additional system dependencies..."
@@ -61,6 +61,6 @@ fi
 
 # Download resources needed for the pipelines
 echo "Downloading resources needed for the pipelines..."
-./download_resources.sh $DOWNLOAD_RESOURCES_FLAG
+./environment_setup/download_resources.sh $DOWNLOAD_RESOURCES_FLAG
 
 echo "Installation completed successfully."

@@ -6,7 +6,6 @@ gpiozero
 lgpio
 git+https://github.com/inmcm/micropyGPS.git
 -e .
--e ./pipelines
 srtm.py
 filterpy
 folium

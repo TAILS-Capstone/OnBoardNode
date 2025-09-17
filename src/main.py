@@ -23,7 +23,7 @@ from dependencies.video_processing.hailo_apps_infra.hailo_rpi_common import (
     app_callback_class,
 )
 from dependencies.video_processing.hailo_apps_infra.detection_pipeline import GStreamerDetectionApp
-from dependencies.lora import SX126x
+from dependencies.transmitter import SX126x
 
 def now_ts() -> float:
     return time.time()

@@ -38,7 +38,7 @@ from dependencies.video_processing.hailo_apps_infra.gstreamer_app import (
 
 # This class inherits from the hailo_rpi_common.GStreamerApp class
 class GStreamerDetectionApp(GStreamerApp):
-    def __init__(self, app_callback, user_data, tiling=False):
+    def __init__(self, app_callback, user_data):
         parser = get_default_parser()
         parser.add_argument(
             "--labels-json",
@@ -92,18 +92,12 @@ class GStreamerDetectionApp(GStreamerApp):
             f"output-format-type=HAILO_FORMAT_TYPE_FLOAT32"
         )
 
-        self.tiling = tiling
-
         # Set the process title
         setproctitle.setproctitle("Hailo Detection App")
 
         self.create_pipeline()
 
     def get_pipeline_string(self):
-
-        # Generate a different pipeline string if tiling
-        if self.tiling:
-            return self.get_tiled_pipeline_string()
 
         source_pipeline = SOURCE_PIPELINE(
             self.video_source, self.video_width, self.video_height

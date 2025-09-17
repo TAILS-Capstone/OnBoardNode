@@ -86,7 +86,14 @@ class GStreamerApp:
         self.video_source = self.options_menu.input
         self.source_type = get_source_type(self.video_source)
         self.user_data = user_data
-        self.video_sink = "autovideosink"
+
+        # Select video sink based on environment and user preference (autovideosink will fail over SSH)
+        if args.headless:
+            self.video_sink = "fakesink"
+        else:
+            # if there is a display, use a real sink; otherwise fall back to headless
+            self.video_sink = "autovideosink" if os.environ.get("DISPLAY") else "fakesink"
+
         self.pipeline = None
         self.loop = None
         self.threads = []

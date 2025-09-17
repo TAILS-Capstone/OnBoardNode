@@ -334,7 +334,7 @@ if __name__ == "__main__":
 
     # Wire up app
     user_data = DetectionWithGPS(lora)
-    app = GStreamerDetectionApp(detection_callback, user_data, tiling=False)
+    app = GStreamerDetectionApp(detection_callback, user_data)
 
     try:
         app.run()

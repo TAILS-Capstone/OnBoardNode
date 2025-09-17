@@ -17,12 +17,12 @@ import pandas as pd
 
 from dependencies.gps.gps_manager import GPSManager
 
-from dependencies.video_processing.hailo_apps_infra.hailo_rpi_common import (
+from dependencies.video_processor.hailo_apps_infra.hailo_rpi_common import (
     get_caps_from_pad,
     get_numpy_from_buffer,
     app_callback_class,
 )
-from dependencies.video_processing.hailo_apps_infra.detection_pipeline import GStreamerDetectionApp
+from dependencies.video_processor.hailo_apps_infra.detection_pipeline import GStreamerDetectionApp
 from dependencies.transmitter import SX126x
 
 def now_ts() -> float:

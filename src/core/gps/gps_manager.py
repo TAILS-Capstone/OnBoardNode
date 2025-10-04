@@ -9,6 +9,7 @@ class GPSManager:
         self.gps.L76X_Set_Baudrate(9600)
         self.gps.L76X_Send_Command(self.gps.SET_POS_FIX_400MS)
         self.gps.L76X_Send_Command(self.gps.SET_NMEA_OUTPUT)
+        self.gps.L76X_Send_Command(self.gps.SET_HOT_START)
         self.elevation_data = srtm.get_data()
         self.gps.L76X_Exit_BackupMode()
         

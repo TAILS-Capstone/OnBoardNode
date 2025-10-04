@@ -1,0 +1,18 @@
+[Unit]
+Description=OnBoardNode startup service
+
+[Service]
+Type=simple
+WorkingDirectory=/home/tails/OnBoardNode/src
+ExecStart=/usr/bin/env bash /home/tails/OnBoardNode/src/start.sh
+Restart=on-failure
+RestartSec=5
+# Journald logging (defaults, explicit for clarity)
+StandardOutput=journal
+StandardError=journal
+
+# If hardware / env needs these, adjust as required:
+# Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set the resource directory
-RESOURCE_DIR="./resources"
+RESOURCE_DIR="./core/vision/resources"
 mkdir -p "$RESOURCE_DIR"
 
 # Define download function with file existence check and retries

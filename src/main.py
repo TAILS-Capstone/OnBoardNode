@@ -25,6 +25,30 @@ from core.vision.hailo_apps_infra.hailo_rpi_common import (
 from core.vision.hailo_apps_infra.detection_pipeline import GStreamerDetectionApp
 from core.transmitter import SX126x
 
+# --- Logging initialization (added) ---
+import os
+import sys
+import logging
+
+def _init_logging():
+    if logging.getLogger().handlers:
+        return  # Already configured elsewhere
+    level = os.getenv("APP_LOG_LEVEL", "INFO").upper()
+    try:
+        from systemd.journal import JournalHandler  # type: ignore
+        handler = JournalHandler()
+    except Exception:
+        handler = logging.StreamHandler(sys.stdout)
+    fmt = "%(asctime)s %(levelname)s %(name)s: %(message)s"
+    handler.setFormatter(logging.Formatter(fmt))
+    root = logging.getLogger()
+    root.addHandler(handler)
+    root.setLevel(level)
+
+_init_logging()
+logger = logging.getLogger(__name__)
+# --- End logging initialization ---
+
 def now_ts() -> float:
     return time.time()
 
@@ -200,7 +224,7 @@ class DetectionWithGPS(app_callback_class):
         self.lora.endPacket()
         self.lora.wait()  # wait for TX done
         # Print radio stats
-        print(f"[LoRa TX] {s} | tx_time={self.lora.transmitTime():0.2f} ms | rate={self.lora.dataRate():0.2f} B/s")
+        logger.info(f"[LoRa TX] {s} | tx_time={self.lora.transmitTime():0.2f} ms | rate={self.lora.dataRate():0.2f} B/s")
 
 # ======================================================================================
 # GStreamer detection callback
@@ -266,12 +290,12 @@ def detection_callback(pad, info, user_data: DetectionWithGPS):
 # ======================================================================================
 def init_lora():
     LoRa = SX126x()
-    print("Begin LoRa radio with:")
-    print(f"\tReset pin: {LORA_CFG['resetPin']}")
-    print(f"\tBusy pin: {LORA_CFG['busyPin']}")
-    print(f"\tIRQ pin:  {LORA_CFG['irqPin']}")
-    print(f"\tTXEN pin: {LORA_CFG['txenPin']}")
-    print(f"\tRXEN pin: {LORA_CFG['rxenPin']}")
+    logger.info("Begin LoRa radio with:")
+    logger.info(f"\tReset pin: {LORA_CFG['resetPin']}")
+    logger.info(f"\tBusy pin: {LORA_CFG['busyPin']}")
+    logger.info(f"\tIRQ pin:  {LORA_CFG['irqPin']}")
+    logger.info(f"\tTXEN pin: {LORA_CFG['txenPin']}")
+    logger.info(f"\tRXEN pin: {LORA_CFG['rxenPin']}")
 
     if not LoRa.begin(
         LORA_CFG["busId"], LORA_CFG["csId"],
@@ -282,23 +306,23 @@ def init_lora():
 
     LoRa.setDio2RfSwitch()
 
-    print(f"Set frequency to {LORA_CFG['frequency']/1e6:.3f} MHz")
+    logger.info(f"Set frequency to {LORA_CFG['frequency']/1e6:.3f} MHz")
     LoRa.setFrequency(LORA_CFG["frequency"])
 
-    print(f"Set TX power to +{LORA_CFG['txPower']} dBm")
+    logger.info(f"Set TX power to +{LORA_CFG['txPower']} dBm")
     LoRa.setTxPower(LORA_CFG["txPower"], LORA_CFG["txPowerVersion"])
 
-    print("Set modulation parameters:")
-    print(f"\tSpreading factor = {LORA_CFG['sf']}")
-    print(f"\tBandwidth = {LORA_CFG['bw']/1000:.0f} kHz")
-    print(f"\tCoding rate = 4/{LORA_CFG['cr']}")
+    logger.info("Set modulation parameters:")
+    logger.info(f"\tSpreading factor = {LORA_CFG['sf']}")
+    logger.info(f"\tBandwidth = {LORA_CFG['bw']/1000:.0f} kHz")
+    logger.info(f"\tCoding rate = 4/{LORA_CFG['cr']}")
     LoRa.setLoRaModulation(LORA_CFG["sf"], LORA_CFG["bw"], LORA_CFG["cr"])
 
-    print("Set packet parameters:")
-    print(f"\t{'Implicit' if LORA_CFG['headerType'] == SX126x.HEADER_IMPLICIT else 'Explicit'} header type")
-    print(f"\tPreamble length = {LORA_CFG['preambleLength']}")
-    print(f"\tPayload Length  = {LORA_CFG['payloadLength']}")
-    print(f"\tCRC {'on' if LORA_CFG['crcType'] else 'off'}")
+    logger.info("Set packet parameters:")
+    logger.info(f"\t{'Implicit' if LORA_CFG['headerType'] == SX126x.HEADER_IMPLICIT else 'Explicit'} header type")
+    logger.info(f"\tPreamble length = {LORA_CFG['preambleLength']}")
+    logger.info(f"\tPayload Length  = {LORA_CFG['payloadLength']}")
+    logger.info(f"\tCRC {'on' if LORA_CFG['crcType'] else 'off'}")
     LoRa.setLoRaPacket(
         LORA_CFG["headerType"],
         LORA_CFG["preambleLength"],
@@ -306,10 +330,10 @@ def init_lora():
         LORA_CFG["crcType"]
     )
 
-    print(f"Set synchronize word to 0x{LORA_CFG['syncWord']:02X}")
+    logger.info(f"Set synchronize word to 0x{LORA_CFG['syncWord']:02X}")
     LoRa.setSyncWord(LORA_CFG["syncWord"])
 
-    print("\n-- LoRa Ready --\n")
+    logger.info("\n-- LoRa Ready --\n")
     return LoRa
 
 # ======================================================================================
@@ -326,7 +350,7 @@ if __name__ == "__main__":
     try:
         app.run()
     except KeyboardInterrupt:
-        print("Program is terminating...")
+        logger.info("Program is terminating...")
     finally:
         try:
             lora.end()

@@ -43,26 +43,21 @@ The project is written in C++ and built using the [Arduino framework](https://ww
 - 📍 **GPS Integration**: Reads NMEA sentences and parses location data from UBlox modules.
 - 📡 **BLE Peripheral Support**: Allows configuration and basic diagnostics over BLE.
 
-## Repository Structure
-
-```bash
-TAILS-Embedded/
-├───GroundNode # Embedded code running on the base station
-│   └───HeltecLoRaApp
-│           BLEInterface.cpp
-│           BLEInterface.h
-│           HeltecLoRaApp.ino
-├───OnBoardNode/ # Embedded code running on the drone’s board
-│   └───apps
-│           detection.py
-│           detection_ai.py
-│           instance_segmentation.py
-│           LoRaTest.py
-│           pose_estimation.py
-│          __init__.py
-|     ...
-└── README.md               # This document
-```
+## Environment Setup
+To configure Raspberry Pi to lauch app on startup run the following:
+- `chmod +x src/start.sh && chmod +x src/environment_setup/download_resources.sh && chmod +x src/environment_setup/install.sh && chmod +x src/environment_setup/run_tests.sh && chmod +x src/environment_setup/setup_env.sh`
+- `sudo cp src/onboardnode.service /etc/systemd/system`
+- `sudo systemctl daemon-reload`
+- `sudo systemctl enable --now onboardnode.service`
+  
+To access the running app:
+- To stop (kill) the running app started by systemd: `sudo systemctl stop onboardnode.service`
+- To restart it run: `sudo systemctl start onboardnode.service`
+- To prevent auto-start while developing: `sudo systemctl disable onboardnode.service`
+- To see if it is still running: `systemctl status onboardnode.service`
+- To forcefully terminate if it hangs: `sudo systemctl kill onboardnode.service` (adds --signal=SIGKILL if needed)
+- To watch logs while iterating: `journalctl -u onboardnode.service -f`
+- For manual runs during development: keep the service disabled and run `.src/start.sh`
 
 ## Bill of Materials (BOM)
 

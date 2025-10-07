@@ -1,83 +1,78 @@
-# TAILS Embedded System README
+# T.A.I.L.S. — On Board Node
 
-**Firmware Development for Tactical Aerial Insight and Localization Suite (TAILS)**  
-By Frederick Andrews, Jad Mghabghab, Josué Dazogbo, Maureen Kouassi, Mouad Ben Lahbib,  Computer Engineering Students at the University of Ottawa  
-Date: 3 July 2025
+By Frederick Andrews, Jad Mghabghab, Josué Dazogbo, Maureen Kouassi, Mouad Ben Lahbib, Computer Engineering Students at the University of Ottawa
+Date: 7 October 2025
 
 ## Overview
 
-**T.A.I.L.S.** (Tactical Aerial Insight and Localization Suite) is a drone-based **Point-of-Interest (POI)** mapping solution designed to enhance search and rescue operations, wildlife monitoring, and coastal surveillance. The system integrates **AI-powered image recognition** with **GPS tracking** to detect and mark important locations on an interactive map within a mobile application. This project involves expertise in **artificial intelligence**, **real-time embedded programming**, **wireless communication**, and **network security**.
+The **On Board Node** is the aerial intelligence and sensing module of the **T.A.I.L.S. (Tactical Aerial Insight and Localization Suite)** system.
+It is mounted on a **drone platform** and built around a **Raspberry Pi 5**, equipped with a **Hailo-8L AI accelerator**, a **LoRa-GPS module**, and a **Raspberry Pi High Quality Camera**.
+
+This module performs **real-time object detection**, **GPS-based localization**, and **LoRa telemetry transmission** to the **Base Station (Ground Node)**.
+The onboard node captures live video streams, detects Points of Interest (POIs) such as humans or vehicles, and transmits both detection results and positional data for mapping in the TAILS mobile app.
 
 <div align="center">
-  <img src="Resources/Images/AssembledDrone.png" alt="Assembled Drone" style="width:70%;" />
-  <p><em>Figure 1: Assembled drone without onboard module mounted</em></p>
+  <img src="ressources/pictures/CameraMount.webp" alt="Camera Mount" style="width:70%;" />
+  <p><em>Figure 1: Raspberry Pi HQ Camera and Hailo AI Hat mounted on drone</em></p>
 </div>
 
-<div align="center">
-  <img src="Resources/Images/CameraMount.webp" alt="Camera Mount Design" style="width:70%;" />
-  <p><em>Figure 2: Custom adjustable mount for Raspberry Pi High Quality Camera</em></p>
-</div>
-
-<div align="center">
-  <img src="Resources/Images/CameraMountInference.webp" alt="Camera Feed Inference" style="width:70%;" />
-  <p><em>Figure 4: Inference results from the onboard AI camera system</em></p>
-</div>
-
-This repository contains the embedded software developed for the **TAILS** (Tactical Aerial Insight and Localization Suite) system. The embedded code runs on a [Heltec WiFi LoRa 32 (V3)](https://heltec.org/project/wifi-lora-32-v3/) board and is responsible for communication, telemetry, and interfacing with onboard sensors (e.g. GPS, IMU). The firmware enables reliable transmission of drone location and sensor data via LoRa to a centralized receiver station.
-
-<div align="center">
-  <img src="Resources/Images/BLEGPSLocation.png" alt="BLE GPS Location Debug View" style="width:45%;" />
-  <p><em>Figure 3: BLE debug interface showing real-time GPS location data</em></p>
-</div>
-
-<div align="center">
-  <img src="Resources/Images/GPSMappingPOI.png" alt="Map with POI" style="width:70%;" />
-  <p><em>Figure 5: Interactive map highlighting Points of Interest based on GPS data</em></p>
-</div>
-
-The project is written in C++ and built using the [Arduino framework](https://www.arduino.cc/), targeting a modified ESP32 microcontroller, with additional support for SX1262-based LoRa modules and UBlox GPS receivers.
 
 ## Features
-- 🧠 **AI Object Detection & POI Recognition**: Point of Interest (POI) object detection enables automated identification of key landmarks or objects; selectable via configuration on mobile app.
-- 🛰️ **LoRa Telemetry Transmission**: Real-time transmission of position and altitude data.
-- 📍 **GPS Integration**: Reads NMEA sentences and parses location data from UBlox modules.
-- 📡 **BLE Peripheral Support**: Allows configuration and basic diagnostics over BLE.
 
-## Environment Setup
-To configure Raspberry Pi to lauch app on startup run the following:
-- `chmod +x src/start.sh && chmod +x src/environment_setup/download_resources.sh && chmod +x src/environment_setup/install.sh && chmod +x src/environment_setup/run_tests.sh && chmod +x src/environment_setup/setup_env.sh`
-- `sudo cp src/onboardnode.service /etc/systemd/system`
-- `sudo systemctl daemon-reload`
-- `sudo systemctl enable --now onboardnode.service`
-  
-To access the running app:
-- To stop (kill) the running app started by systemd: `sudo systemctl stop onboardnode.service`
-- To restart it run: `sudo systemctl start onboardnode.service`
-- To prevent auto-start while developing: `sudo systemctl disable onboardnode.service`
-- To see if it is still running: `systemctl status onboardnode.service`
-- To forcefully terminate if it hangs: `sudo systemctl kill onboardnode.service` (adds --signal=SIGKILL if needed)
-- To watch logs while iterating: `journalctl -u onboardnode.service -f`
-- For manual runs during development: keep the service disabled and run `.src/start.sh`
+* 🧠 **AI Object Detection**: Performs onboard inference using a Raspberry Pi and Hailo-8L accelerator.
+* 📸 **High-Resolution Imaging**: Captures real-time video and stills with the Raspberry Pi HQ Camera.
+* 📍 **GPS Telemetry**: Reads coordinates from the LoRa-GPS module and attaches them to detection data.
+* 📡 **LoRa Transmission**: Sends structured telemetry packets to the base station for BLE rebroadcast.
+* 🔋 **Power-Efficient Operation**: Powered by a drone-mounted UPS HAT and LiPo battery system for self sufficiency.
 
-## Bill of Materials (BOM)
+## Hardware
 
-Below is a detailed list of hardware components used for the **TAILS Embedded System**, with all costs shown after tax.
+* **Raspberry Pi 5** (Main processor)
+* **Hailo-8L AI Accelerator Hat** for onboard inference
+* **Raspberry Pi HQ Camera** (12.3 MP sensor, C/CS-mount lens)
+* **SX1262/L76X LoRa-GPS Module** for long-range communication and localization
+* **5V UPS HAT** for stable power delivery
+* **Drone Power System** (LiPo battery, ESCs, and flight controller)
 
-### 🔧 Hardware Components
 
-| Item Description | Quantity | Cost After Tax ($) |
-|------------------|----------|---------------------|
-| [Raspberry Pi Zero 2 W + AI Camera + Accessories](https://www.raspberrypi.com/products/raspberry-pi-zero-2-w/) | 1 | 240.01 |
-| [Raspberry Pi 5 (16GB) + Accessories](https://www.pishop.ca/product/raspberry-pi-5-16gb/?src=raspberrypi) | 1 | 304.30 |
-| [Raspberry Pi HQ Camera + Lens](https://www.raspberrypi.com/products/ai-camera/) | 1 | 137.24 |
-| [USB to LoRa Dongle](https://www.pishop.ca/product/usb-to-lora-dongle-915-mhz/) | 1 | Included Above |
-| [Heltec LoRa Board (Base Station)](https://www.amazon.ca/-/fr/gp/product/B086ZFCV7F?smid=A2RJ79XBQX6W3M&psc=1) | 1 | 41.69 |
-| [SX1262 LoRa Hat](https://www.amazon.ca/SX1262-LoRaWAN-GNSS-HAT-Expansion/dp/B0D4DPB68J) | 1 | 52.93 |
-| [AI Accelerator Hat (Hailo-8L)](https://hailo.ai) | 1 | 123.06 |
-| [PHAT-GPM GPS Module](https://canada.newark.com/designer-systems/phat-gpm/gps-module-raspberry-pi-rohs-compliant/dp/45AJ6805) | 1 | 55.99 |
-| [Raspberry Pi UPS Power HAT](https://www.pishop.ca/product/uninterruptible-power-supply-ups-hat-for-raspberry-pi-zero-stable-5v-power-output/) | 1 | 77.79 |
-| [Adjustable Camera Mount](https://www.pishop.ca/product/universal-tilt-adjustable-mount-for-raspberry-pi-camera/) | 1 | 35.65 |
-| Drone Parts (Motors, Frame, ESC, etc.) | — | 754.77 |
-| Accessories (Cables, spacers, mounts, etc.) | — | 159.67 |
-| [Drone Assembly Fee (StansUAV)](https://stansuav.ca/) | 1 | 339.00 |
-| **Total Project Cost** | — | **2,322.10** |
+## Software Architecture
+
+The onboard software is written in Python and is organized for modularity and maintainability. It uses computer vision and hardware libraries (for example: OpenCV, Ultralytics/YOLO-style models or Hailo SDK for the Hailo accelerator, and pyserial for serial/GPS/LoRa links). Dependency manifests are kept in `src/requirements.txt` and `src/vision/requirements.txt`.
+
+Data flow (high level):
+
+1. Camera Capture — Frames are captured from the HQ Camera.
+2. AI Inference — Each frame is processed by the vision pipeline (Hailo-enabled code paths are under `src/vision/`).
+3. Telemetry Construction — GPS coordinates (from `src/core/gps`) are paired with detections to build a structured telemetry packet.
+4. LoRa Transmission — Packets are transmitted by the LoRa driver in `src/transmitter/` to the Base Station for further rebroadcast (BLE).
+
+<div align="center">
+  <img src="ressources/pictures/EndtoEndTestTerminal.jpg" alt="End-to-end test terminal" style="width:70%;" />
+  <p><em>Figure 2: End-to-end test with terminal output captured during integration testing</em></p>
+</div>
+
+
+Repository layout (relevant parts):
+
+```
+OnBoardNode/
+├── src/
+│   ├── main.py                 # Main entry: initializes camera, model, GPS polling, transmitter
+│   ├── core/
+│   │   └── gps/                # GPS drivers and manager (L76X driver, gps_manager)
+│   │   └── transmitter/        # LoRa transmitter drivers (SX126x)
+│   │   └── vision/             # Vision pipelines, Hailo integration, and C++ helpers
+│   ├── environment_setup/      # Scripts and venv for environment setup
+│   └── utils/                  # Helper utilities (distance, plotting, etc.)
+└── README.md
+```
+
+Key scripts and components:
+
+- `src/main.py` — Project entry point that wires camera, model, GPS, and transmitter.
+- `src/core/gps/gps_manager.py` — GPS polling and parsing logic.
+- `src/core/gps/L76X.py` — Low-level driver for the L76X GPS module (serial parsing, NMEA handling).
+- `src/transmitter/SX126x.py` — LoRa radio control and packet transmit/receive routines.
+- `src/vision/hailo_apps_infra/detection_pipeline.py` — Vision inference pipeline and postprocessing.
+
+This layout reflects the actual repository structure and keeps hardware abstraction, vision inference, and communication layers separated so they can be developed and tested independently.

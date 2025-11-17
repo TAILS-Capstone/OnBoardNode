@@ -34,4 +34,4 @@ export PYTHONUNBUFFERED=1
 export APP_LOG_LEVEL
 
 echo "[start] Launching main..."
-exec python3 "$MAIN_SCRIPT" -i rpi --headless
+exec python3 "$MAIN_SCRIPT" -i rpi --headless --use-frame

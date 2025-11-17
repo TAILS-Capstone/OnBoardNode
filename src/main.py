@@ -64,6 +64,9 @@ class DetectionWithGPS(app_callback_class):
         # LoRa radio handle
         self.lora = lora
 
+        # always grab frames for recording
+        self.use_frame = True
+
         # DataFrame to store detections; columns: ts, label, lat, lon, sent
         self.df = pd.DataFrame(columns=["ts", "label", "id", "lat", "lon", "sent"])
         self.df_lock = threading.Lock()
@@ -74,6 +77,20 @@ class DetectionWithGPS(app_callback_class):
         # remember last location per ID (for person)
         # maps: track_id (int) -> (lat, lon)
         self.last_loc_by_id = {}
+
+        # Video recording / rotation settings
+        self.recordings_dir = os.getenv("VIDEO_DIR", os.path.join(os.getcwd(), "recordings"))
+        os.makedirs(self.recordings_dir, exist_ok=True)
+        self.video_fps = float(os.getenv("VIDEO_FPS", "20.0"))
+        self.video_codec = os.getenv("VIDEO_CODEC", "mp4v")
+        self.rotate_interval = int(os.getenv("VIDEO_ROTATE_SEC", "30"))  # seconds
+        self.out_writer = None
+        self._video_lock = threading.Lock()
+        self._segment_start_ts = 0.0
+        # track per-segment frame count and path for debug
+        self._segment_frame_count = 0
+        self._current_segment_path = None
+        # recordings will be written in segments ~rotate_interval long; writer is created on first frame
 
     def increment(self):
         self.detection_count += 1
@@ -226,6 +243,78 @@ class DetectionWithGPS(app_callback_class):
         # Print radio stats
         logger.info(f"[LoRa TX] {s} | tx_time={self.lora.transmitTime():0.2f} ms | rate={self.lora.dataRate():0.2f} B/s")
 
+    # Called by detection_callback to record the current frame.
+    # This rotates files every self.rotate_interval seconds.
+    def set_frame(self, frame):
+        if frame is None:
+            return
+        now = time.time()
+        with self._video_lock:
+            logger.debug(f"Received frame for recording at {now:.3f}, shape={getattr(frame,'shape',None)}")
+            need_new = False
+            if self.out_writer is None:
+                need_new = True
+            elif now - self._segment_start_ts >= self.rotate_interval:
+                # rotate: close current writer and start a new one
+                # log details about the segment being closed
+                try:
+                    duration = now - self._segment_start_ts
+                    logger.info(
+                        f"Rotating recording segment. Closing: path={self._current_segment_path} duration={duration:.2f}s frames={self._segment_frame_count}"
+                    )
+                    self.out_writer.release()
+                except Exception:
+                    logger.exception("Error releasing VideoWriter during rotation")
+                # reset segment metadata
+                self.out_writer = None
+                self._current_segment_path = None
+                self._segment_frame_count = 0
+                need_new = True
+
+            if need_new:
+                h, w = frame.shape[:2]
+                fourcc = cv2.VideoWriter_fourcc(*self.video_codec)
+                ts = time.strftime("%Y%m%d_%H%M%S")
+                fname = f"recording_{ts}.mp4"
+                path = os.path.join(self.recordings_dir, fname)
+                try:
+                    self.out_writer = cv2.VideoWriter(path, fourcc, self.video_fps, (w, h))
+                    self._segment_start_ts = now
+                    self._segment_frame_count = 0
+                    self._current_segment_path = path
+                    logger.info(f"Started new recording segment: {path} fps={self.video_fps} codec={self.video_codec} rotate_sec={self.rotate_interval}")
+                except Exception:
+                    logger.exception(f"Failed to create VideoWriter for path={path}")
+                    self.out_writer = None
+                    self._current_segment_path = None
+
+            if self.out_writer is not None:
+                try:
+                    self.out_writer.write(frame)
+                    self._segment_frame_count += 1
+                    # periodic debug log every 100 frames to reduce spam
+                    if self._segment_frame_count % 100 == 0:
+                        logger.debug(f"Wrote frame #{self._segment_frame_count} to {self._current_segment_path}")
+                except Exception:
+                    logger.exception(f"Failed writing video frame to {self._current_segment_path}")
+
+    def stop_recording(self):
+        with self._video_lock:
+            if self.out_writer is not None:
+                now = time.time()
+                try:
+                    duration = now - self._segment_start_ts if self._segment_start_ts else 0.0
+                    logger.info(
+                        f"Stopping video recording. Finalizing segment: path={self._current_segment_path} duration={duration:.2f}s frames={self._segment_frame_count}"
+                    )
+                    self.out_writer.release()
+                except Exception:
+                    logger.exception("Error while releasing VideoWriter")
+                finally:
+                    self.out_writer = None
+                    self._current_segment_path = None
+                    self._segment_frame_count = 0
+
 # ======================================================================================
 # GStreamer detection callback
 # ======================================================================================
@@ -244,7 +333,7 @@ def detection_callback(pad, info, user_data: DetectionWithGPS):
     # caps → optional frame
     format, width, height = get_caps_from_pad(pad)
     frame = None
-    if user_data.use_frame and format and width and height:
+    if format and width and height:
         frame = get_numpy_from_buffer(buffer, format, width, height)
 
     roi = hailo.get_roi_from_buffer(buffer)
@@ -270,12 +359,29 @@ def detection_callback(pad, info, user_data: DetectionWithGPS):
                 lon=location_data["longitude"],
             )
 
-        if frame is not None:
-            x1, y1, x2, y2 = bbox.left, bbox.top, bbox.right, bbox.bottom
-            cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
-            cv2.putText(frame, f"{label} {confidence:.2f} id={track_id if track_id is not None else -1}",
-                        (int(x1), int(y1) - 10),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+            # draw bounding box and label on the frame used for recording
+            if frame is not None:
+                try:
+                    # use pixel coordinates from Hailo bbox
+                    x1 = int(bbox.left)
+                    y1 = int(bbox.top)
+                    x2 = int(bbox.right)
+                    y2 = int(bbox.bottom)
+
+                    cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                    text = f"{label} {confidence:.2f}"
+                    cv2.putText(
+                        frame,
+                        text,
+                        (x1, max(0, y1 - 5)),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.5,
+                        (0, 255, 0),
+                        1,
+                        cv2.LINE_AA,
+                    )
+                except Exception:
+                    logger.exception("Error drawing bounding box on frame")
 
     if frame is not None:
         frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
@@ -352,6 +458,10 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         logger.info("Program is terminating...")
     finally:
+        try:
+            user_data.stop_recording()
+        except Exception:
+            pass
         try:
             lora.end()
         except Exception:

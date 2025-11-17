@@ -189,3 +189,4 @@ dist/
 .cache/
 coverage/
 *.csv
+*.mp4

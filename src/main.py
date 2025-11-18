@@ -359,30 +359,6 @@ def detection_callback(pad, info, user_data: DetectionWithGPS):
                 lon=location_data["longitude"],
             )
 
-            # draw bounding box and label on the frame used for recording
-            if frame is not None:
-                try:
-                    # use pixel coordinates from Hailo bbox
-                    x1 = int(bbox.left)
-                    y1 = int(bbox.top)
-                    x2 = int(bbox.right)
-                    y2 = int(bbox.bottom)
-
-                    cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                    text = f"{label} {confidence:.2f}"
-                    cv2.putText(
-                        frame,
-                        text,
-                        (x1, max(0, y1 - 5)),
-                        cv2.FONT_HERSHEY_SIMPLEX,
-                        0.5,
-                        (0, 255, 0),
-                        1,
-                        cv2.LINE_AA,
-                    )
-                except Exception:
-                    logger.exception("Error drawing bounding box on frame")
-
     if frame is not None:
         frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
         user_data.set_frame(frame)

@@ -100,6 +100,7 @@ def SOURCE_PIPELINE(
         source_element = (
             f"appsrc name=app_source is-live=true leaky-type=downstream max-buffers=3 ! "
             "videoflip name=videoflip video-direction=horiz ! "
+            "videoflip video-direction=vert ! "
             f"video/x-raw, format={video_format}, width={video_width}, height={video_height} ! "
         )
     elif source_type == "libcamera":

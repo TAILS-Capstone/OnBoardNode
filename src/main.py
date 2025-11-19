@@ -83,7 +83,7 @@ class DetectionWithGPS(app_callback_class):
         os.makedirs(self.recordings_dir, exist_ok=True)
         self.video_fps = float(os.getenv("VIDEO_FPS", "20.0"))
         self.video_codec = os.getenv("VIDEO_CODEC", "mp4v")
-        self.rotate_interval = int(os.getenv("VIDEO_ROTATE_SEC", "30"))  # seconds
+        self.rotate_interval = int(os.getenv("VIDEO_ROTATE_SEC", "10"))  # seconds
         self.out_writer = None
         self._video_lock = threading.Lock()
         self._segment_start_ts = 0.0
@@ -324,17 +324,46 @@ def detection_callback(pad, info, user_data: DetectionWithGPS):
         return Gst.PadProbeReturn.OK
 
     user_data.increment()
-    gps_info = user_data.get_gps_string()  # (still prints if you need it)
+    gps_info = user_data.get_gps_string()
 
     location_data = user_data.get_location_data()
     if not location_data:
         location_data = {"latitude": 0.0, "longitude": 0.0, "elevation": 0.0, "speed": 0.0, "course": 0.0}
 
-    # caps → optional frame
     format, width, height = get_caps_from_pad(pad)
     frame = None
     if format and width and height:
         frame = get_numpy_from_buffer(buffer, format, width, height)
+
+    # Fallback: handle common YUV formats when running with a display (NV12 / I420)
+    if frame is None and width and height:
+        try:
+            caps = pad.get_current_caps()
+            if caps:
+                s = caps.get_structure(0)
+                fmt = s.get_string("format")
+                if fmt in ("NV12", "I420"):
+                    ok, map_info = buffer.map(Gst.MapFlags.READ)
+                    if ok:
+                        import numpy as np
+                        yuv = np.frombuffer(map_info.data, dtype=np.uint8)
+                        # For NV12/I420 GStreamer gives contiguous Y then UV (NV12) or Y U V (I420)
+                        if fmt == "NV12":
+                            # Shape: height * 3/2 rows by width columns
+                            if yuv.size == int(height * width * 1.5):
+                                yuv = yuv.reshape((height * 3 // 2, width))
+                                frame = cv2.cvtColor(yuv, cv2.COLOR_YUV2BGR_NV12)
+                        elif fmt == "I420":
+                            if yuv.size == int(height * width * 1.5):
+                                yuv = yuv.reshape((height * 3 // 2, width))
+                                frame = cv2.cvtColor(yuv, cv2.COLOR_YUV2BGR_I420)
+                        buffer.unmap(map_info)
+                        if frame is None:
+                            logger.debug(f"YUV fallback attempted but frame still None (format={fmt})")
+                else:
+                    logger.debug(f"Unsupported raw format for fallback: {fmt}")
+        except Exception:
+            logger.debug("YUV fallback conversion failed", exc_info=True)
 
     roi = hailo.get_roi_from_buffer(buffer)
     detections = roi.get_objects_typed(hailo.HAILO_DETECTION)
@@ -342,15 +371,10 @@ def detection_callback(pad, info, user_data: DetectionWithGPS):
     for detection in detections:
         label = detection.get_label()
         if label not in RELEVANT_CLASSES:
-            continue  # ignore non-relevant classes
-
+            continue
         confidence = detection.get_confidence()
-        bbox = detection.get_bbox()
-
-        # Hailo track ID (from tracker)
         track = detection.get_objects_typed(hailo.HAILO_UNIQUE_ID)
         track_id = track[0].get_id() if len(track) == 1 else None
-
         if confidence >= CONF_THRESHOLD:
             user_data.add_detection(
                 label=label,
@@ -359,9 +383,14 @@ def detection_callback(pad, info, user_data: DetectionWithGPS):
                 lon=location_data["longitude"],
             )
 
-    if frame is not None:
-        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-        user_data.set_frame(frame)
+    if frame is None:
+        logger.debug("No frame captured this callback; skipping recording.")
+    else:
+        # Ensure BGR for OpenCV writer
+        if len(frame.shape) == 3 and frame.shape[2] == 3:
+            user_data.set_frame(frame if format == "BGR" else cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
+        else:
+            logger.debug(f"Frame shape unexpected: {frame.shape}")
 
     user_data.try_transmit_batch()
     return Gst.PadProbeReturn.OK
